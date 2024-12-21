@@ -1,0 +1,222 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html data-dpr="1" style="font-size: 38px;">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,maximum-scale=1,minimum-scale=1">
+    <title>Payment - CheckOut</title>
+    <link href="/css/style.css" rel="stylesheet">
+    <style>
+        .upi_content {
+            padding: 0.3rem !important;
+        }
+
+        .upi_content img {
+            height: 20px !important;
+        }
+
+        .copy {
+            border-radius: 0.1rem;
+            box-shadow: 0 0.04rem 0.1rem 0 rgb(68 98 147);
+            line-height: 30px;
+            background: linear-gradient(-45deg, #446293, #4c6994 50%, #446293);
+            color: #fff;
+            float: right;
+            width: 70px;
+        }
+    </style>
+    <link>
+    <link>
+</head>
+
+<body class="overflow">
+
+    <div class="main" style="padding-top:0.2rem;background-color:#fff;">
+        <div class="money_content">
+            <span class="money_title" style="font-size:18px;">UPI Payment Apps</span>
+            <div class="money" style="font-size:14px">Total Amount Payable:
+                <font class="money">0</font>
+            </div>
+        </div>
+
+        <div class="content" style="background-color:#fff0;box-shadow:none;">
+            <div class="option">1.Automatic Transfer</div>
+            <div class="top">Choose Payment Method</div>
+            <div class="upi_content select">
+                <img src="/images/paytm.png">
+                <div style="float:right">
+                    <div class="radio">
+                        <input id="radio-1" name="paymethod" type="radio"
+                            value="Patym"
+                            checked>
+                        <label for="radio-1" class="radio-label"></label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="upi_content">
+                <img src="/images/phonepe.png">
+                <div style="float:right">
+                    <div class="radio">
+                        <input id="radio-2" name="paymethod" type="radio"
+                            value="PhonePe">
+                        <label for="radio-2" class="radio-label"></label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="upi_content">
+                <img src="/images/upi_b.png">
+                <div style="float:right">
+                    <div class="radio">
+                        <input id="radio-6" name="paymethod" type="radio"
+                            value="UPI">
+                        <label for="radio-6" class="radio-label"></label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="upi_content">
+                <img src="/images/gopay.png">
+                <div style="float:right">
+                    <div class="radio">
+                        <input id="radio-3" name="paymethod" type="radio"
+                            value="GooglePay">
+                        <label for="radio-3" class="radio-label"></label>
+                    </div>
+                </div>
+            </div>
+
+            <input type="hidden" id="rechargeAmount">
+
+            <div class="upi_content">
+                <img src="/images/morepay.png">
+                <div style="float:right">
+                    <div class="radio" onclick="showQrcode()">
+                        <b id="lb_qrcode">Click To Show QRCode</b>
+                    </div>
+                </div>
+                <div id="div_qrcode" style="width:100%;height:230px;padding-top:8px;display:block;">
+                    <div style="text-align:center;font-size:14px;padding-bottom:5px">Use Mobile Scan Code to Pay</div>
+
+                    <div  id="qrcode"
+                       >
+                        <img  id="qrcode" style="    height: 113px !important;
+                        margin-left: 112px;
+                        margin-top: 11px;" src="/images/paymentqr.jpeg" alt="">
+                    </div>
+                </div>
+            </div>
+
+            <div class="option">2.Manual Transfer</div>
+            <div class="top">
+                Copy UPI to Payment Software
+            </div>
+            <div class="upi_content">
+                <span style="line-height:30px;font-size:14px">UPI:<b id="upi_info">genoxy@ybl</b></span>
+                <button class="copy" id="btn_copy" data-clipboard-text="genoxy@ybl" >Copy</button>
+            </div>
+            <div class="top">Please enter the UTR No.</div>
+            <div class="upi_content" onclick="$('#txt_utr').focus()">
+                <input style="line-height:30px;height:100%;font-size:22px;"
+                    oninput="if(value.length > 12) value = value.slice(0,12)" id="txt_utr" type="number" name="txt_utr"
+                    placeholder="input 12-digit utr" />
+              
+            </div>
+        </div>
+    </div>
+    <div class="foot" style="box-shadow:none;">
+        <button id="create-bank">Pay  <span class="money"></span></button>
+    </div>
+    <script src="https://code.jquery.com//jquery-3.3.1.min.js"></script>
+    
+   
+    <script type="text/javascript">
+        const queryString = window.location;
+        var url = new URL(queryString);
+        var amount = url.searchParams.get("amount");
+        $(".money").html("₹" +amount);
+        $("#rechargeAmount").val(amount);
+        
+        $('#btn_copy').click(function() {
+                var textToCopy = $('#upi_info').text();
+                var $temp = $("<input>");
+                $("body").append($temp);
+                $temp.val(textToCopy).select();
+                document.execCommand("copy");
+                $temp.remove();
+
+                alert('UPI COPIED')
+            });
+
+
+            $('#create-bank').click(function (e) {
+                e.preventDefault();
+                $(this).addClass('block-click');
+                let money = $('#rechargeAmount').val().trim();
+                let txt_utr = $('#txt_utr').val().trim();
+                let type = $(".select input[type='radio']:checked").val();
+
+            
+                if (money && money >= 100) {
+
+                    if (txt_utr) {
+                      
+                  
+                    $.ajax({
+                        type: "POST",
+                        url: "/api/webapi/manualPayment",
+                        data: {
+                            money: money,
+                            txt_utr: txt_utr,
+                            type: type,
+                        },
+                        dataType: "json",
+                        success: function (response) {
+                            alertMess(response.message, $(this));
+                     
+                            if (response.status) {
+
+                                window.location = '/wallet/recharge';
+                            }
+                          
+                        }
+                    });
+                    return true;
+                }
+                else
+                {
+                 
+                        alertMess('Enter UTR Number', $(this));
+                        return false;
+
+                }
+                }
+              
+                alertMess('Deposit amount range: 10.00~10,000.00', $(this));
+            });
+
+            function alertMess(text, sic) {
+                $('body').append(
+                    `<div data-v-1dcba851="" class="msg">
+                    <div data-v-1dcba851="" class="msg-content v-enter-active v-enter-to" style=""> ${text} </div>
+                </div>`
+                );
+                setTimeout(() => {
+                    $('.msg .msg-content').removeClass('v-enter-active v-enter-to');
+                    $('.msg .msg-content').addClass('v-leave-active v-leave-to');
+                    setTimeout(() => {
+                        $('.msg').remove();
+                    }, 100);
+                    sic.removeClass('block-click');
+                }, 1000);
+            }
+
+
+
+
+
+    </script>
+</body>
+
+</html>

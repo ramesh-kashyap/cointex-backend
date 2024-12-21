@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html translate="no" data-dpr="1" style="font-size: 48.16px;">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="csrf-token" content="" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="robots" content="noindex,nofollow">
+    <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" name="viewport">
+    <title>
+        <%= siteName %>
+    </title>
+    <link href="/css/wallet/main.css" rel="stylesheet" />
+    <link href="/css/wallet/chunk_2-1.css" rel="stylesheet" />
+    <link href="/css/wallet/chunk_2-2.css" rel="stylesheet" />
+    <link href="/css/wallet/chunk_2-3.css" rel="stylesheet" />
+    <link rel="shortcut icon" href="/images/bitbug_favicon.png" type="image/x-icon">
+    <link rel="stylesheet" type="text/css" href="/dynamic-styles.css">
+
+    <style>
+        html,
+        body {
+            height: 100%;
+            width: 100%;
+            background-color: #9195a3;
+            padding: 0;
+            margin: 0;
+        }
+
+        .recycleBtnD[data-v-0dabd3fc] {
+            width: 100%;
+            text-align: center;
+            margin-bottom: .4rem;
+        }
+
+        .recycleBtnD .recycleBtn[data-v-0dabd3fc] {
+            width: 100%;
+            height: .93333rem;
+            color: #fff;
+            font-size: .4rem;
+            font-weight: 600;
+            letter-spacing: .016rem;
+            border: none;
+            border-radius: 1.06667rem;
+            background: linear-gradient(90deg, #2AAAF3 0%, #2979F2 100%);
+        }
+
+        .progressBars[data-v-0dabd3fc] {
+            display: -webkit-box;
+            display: -webkit-flex;
+            display: flex;
+            -webkit-box-pack: justify;
+            -webkit-justify-content: space-between;
+            justify-content: space-between;
+            width: 100%;
+            text-align: center;
+            margin-bottom: .4rem;
+        }
+
+        .wallet-container-content .container .progressBars>div[data-v-0dabd3fc] {
+            width: 50%;
+            display: -webkit-box;
+            display: -webkit-flex;
+            display: flex;
+            -webkit-box-orient: vertical;
+            -webkit-box-direction: normal;
+            -webkit-flex-direction: column;
+            flex-direction: column;
+            -webkit-box-align: center;
+            -webkit-align-items: center;
+            align-items: center;
+        }
+
+        .progressBars>div[data-v-0dabd3fc] .van-circle {
+            width: 2.45333rem;
+            height: 2.45333rem;
+            border: 5px solid #fff;
+            border-radius: 53px;
+        }
+
+        .van-circle svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .progressBars[data-v-0dabd3fc] .van-circle__text {
+            font-size: .4rem;
+            font-weight: 600;
+            color: var(--text_color_L1);
+        }
+
+        .van-circle__text {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            box-sizing: border-box;
+            width: 100%;
+            padding: 0 var(--van-padding-base);
+            color: var(--van-circle-text-color);
+            font-weight: var(--van-circle-text-font-weight);
+            font-size: var(--van-circle-text-font-size);
+            line-height: var(--van-circle-text-line-height);
+            -webkit-transform: translateY(-50%);
+            transform: translateY(-50%);
+        }
+
+        .progressBars>div h3[data-v-0dabd3fc] {
+            margin-top: .16rem;
+        }
+
+        h3[data-v-0dabd3fc] {
+            font-family: Inter;
+            font-style: normal;
+            font-weight: 400;
+            line-height: .46667rem;
+            letter-spacing: .04em;
+            font-size: .4rem;
+            color: var(--darkTextW, #fff);
+        }
+
+        .progressBars span[data-v-0dabd3fc] {
+            color: #fff;
+        }
+
+        span[data-v-0dabd3fc] {
+            font-family: Inter;
+            font-style: normal;
+            font-weight: 400;
+            line-height: .46667rem;
+            letter-spacing: .04em;
+            font-size: .32rem;
+            text-align: center;
+        }
+
+        .mian .wallet-box .box .balance .txt[data-v-7b283485] {
+            text-align: center;
+            display: block;
+        }
+
+        .userDetail[data-v-0dabd3fc] {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: .28rem;
+            -webkit-box-orient: initial;
+            -webkit-box-direction: initial;
+            -webkit-flex-direction: initial;
+            flex-direction: initial;
+            width: 100%;
+            margin-top: .26667rem;
+        }
+
+        .userDetail>div[data-v-0dabd3fc] {
+            display: -webkit-box;
+            display: -webkit-flex;
+            display: flex;
+            -webkit-box-orient: vertical;
+            -webkit-box-direction: normal;
+            -webkit-flex-direction: column;
+            flex-direction: column;
+            -webkit-box-align: center;
+            -webkit-align-items: center;
+            align-items: center;
+            -webkit-box-pack: start;
+            -webkit-justify-content: flex-start;
+            justify-content: flex-start;
+            gap: .13333rem;
+        }
+
+        .wallet-container-content .container .userDetail>div .imgD[data-v-0dabd3fc] {
+            width: 1.30667rem;
+            height: 1.30667rem;
+            border-radius: .4rem;
+            background: var(--bg_color_L2);
+            display: -webkit-box;
+            display: -webkit-flex;
+            display: flex;
+            -webkit-box-align: center;
+            -webkit-align-items: center;
+            align-items: center;
+            -webkit-box-pack: center;
+            -webkit-justify-content: center;
+            justify-content: center;
+            margin-bottom: .13333rem;
+        }
+
+        .userDetail>div .imgD img[data-v-0dabd3fc] {
+            width: 100%;
+            height: auto;
+        }
+
+        .mian .wallet-box .list[data-v-7b283485] {
+            background: #2b3270;
+            box-shadow: 0 0 .8rem 0 rgba(58, 58, 58, .07);
+        }
+
+        .wallet-container-header-belly[data-v-0dabd3fc] {
+            margin-top: .13333rem;
+            display: -webkit-box;
+            display: -webkit-flex;
+            display: flex;
+            -webkit-box-orient: vertical;
+            -webkit-box-direction: normal;
+            -webkit-flex-direction: column;
+            flex-direction: column;
+            -webkit-box-align: center;
+            -webkit-align-items: center;
+            align-items: center;
+        }
+
+        .wallet-container-header-belly svg[data-v-0dabd3fc] {
+            width: 1.06667rem;
+            height: 1.06667rem;
+        }
+
+        .svg-icon {
+            width: 1em;
+            height: 1em;
+            fill: var(--svgHoticon);
+            vertical-align: middle;
+        }
+
+        .wallet-container-header-belly>div[data-v-0dabd3fc]:nth-of-type(1) {
+            margin: .10667rem 0;
+            font-size: .64rem;
+            line-height: .64rem;
+        }
+
+        .wallet-container span[data-v-0dabd3fc] {
+            font-family: Inter;
+            font-style: normal;
+            font-weight: 400;
+            line-height: .46667rem;
+            letter-spacing: .04em;
+            font-size: .32rem;
+            text-align: center;
+        }
+
+        .wallet-container-content[data-v-0dabd3fc] {
+            display: -webkit-box;
+            display: -webkit-flex;
+            display: flex;
+            -webkit-box-orient: vertical;
+            -webkit-box-direction: normal;
+            -webkit-flex-direction: column;
+            flex-direction: column;
+            gap: .32rem;
+            padding-inline: .4rem;
+            padding-bottom: 1.6rem;
+            position: relative;
+            -webkit-box-align: center;
+            -webkit-align-items: center;
+            align-items: center;
+        }
+
+        .wallet-container-content .container[data-v-0dabd3fc] {
+            display: -webkit-box;
+            display: -webkit-flex;
+            display: flex;
+            -webkit-box-orient: vertical;
+            -webkit-box-direction: normal;
+            -webkit-flex-direction: column;
+            flex-direction: column;
+            -webkit-box-align: start;
+            -webkit-align-items: flex-start;
+            align-items: flex-start;
+            min-height: 9.06667rem;
+            padding: .62667rem .18667rem .26667rem;
+            font-family: bahnschrift;
+            border-radius: .26667rem;
+            background-color: #333332;
+            width: 100%;
+            margin-top: .32rem;
+        }
+
+        .wallet-container-content .container .progressBars[data-v-0dabd3fc] {
+            display: -webkit-box;
+            display: -webkit-flex;
+            display: flex;
+            -webkit-box-pack: justify;
+            -webkit-justify-content: space-between;
+            justify-content: space-between;
+            width: 100%;
+            text-align: center;
+            margin-bottom: .4rem;
+        }
+
+        .wallet-container-content .container .progressBars>div[data-v-0dabd3fc] {
+            width: 50%;
+            display: -webkit-box;
+            display: -webkit-flex;
+            display: flex;
+            -webkit-box-orient: vertical;
+            -webkit-box-direction: normal;
+            -webkit-flex-direction: column;
+            flex-direction: column;
+            -webkit-box-align: center;
+            -webkit-align-items: center;
+            align-items: center;
+        }
+
+        .wallet-container-content .container .progressBars>div[data-v-0dabd3fc] .van-circle {
+            width: 2.45333rem;
+            height: 2.45333rem;
+        }
+
+        .van-circle {
+            position: relative;
+            display: inline-block;
+            width: var(--van-circle-size);
+            height: var(--van-circle-size);
+            text-align: center;
+        }
+
+        .wallet-container-content .container .progressBars>div h3[data-v-0dabd3fc] {
+            margin-top: .16rem;
+        }
+
+        .wallet-container h3[data-v-0dabd3fc] {
+            font-family: Inter;
+            font-style: normal;
+            font-weight: 400;
+            line-height: .46667rem;
+            letter-spacing: .04em;
+            font-size: .4rem;
+            color: #F5F3F0;
+        }
+
+        .wallet-container .progressBars span[data-v-0dabd3fc] {
+            color: #F5F3F0;
+        }
+
+        .wallet-container span[data-v-0dabd3fc] {
+            font-family: Inter;
+            font-style: normal;
+            font-weight: 400;
+            line-height: .46667rem;
+            letter-spacing: .04em;
+            font-size: .32rem;
+            text-align: center;
+        }
+
+        .van-circle svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .van-circle__layer {
+            stroke: #4D4D4C;
+        }
+
+        .wallet-container-content .container .recycleBtnD .recycleBtn[data-v-0dabd3fc] {
+            width: 100%;
+            height: .93333rem;
+            color: #fff;
+            font-size: .4rem;
+            font-weight: 600;
+            letter-spacing: .016rem;
+            border: none;
+            border-radius: 1.06667rem;
+            background: linear-gradient(90deg, #FAE59F 0%, #C4933F 100%);
+        }
+    </style>
+</head>
+
+<body style="font-size: 12px;">
+    <div id="app">
+        <div data-v-7b283485="" class="mian">
+            <div data-v-106b99c8="" data-v-7b283485="" class="navbar">
+                <div data-v-106b99c8="" class="navbar-left"></div>
+                <div data-v-106b99c8="" class="navbar-title"> Wallet </div>
+                <div data-v-106b99c8="" class="navbar-right" onclick="location.href='/keFuMenu'">
+                    <div data-v-7b283485="" data-v-106b99c8="" class="c-row">
+                        <img data-v-7b283485="" data-v-106b99c8="" src="/images/audio.webp" class="audio">
+                    </div>
+                </div>
+            </div>
+            <div data-v-7b283485="" class="wallet">
+                <br>
+                <div data-v-0dabd3fc="" class="wallet-container-header-belly">
+                    <img src="/images/icon_wallet.webp" style="width: 30px; height: 30px" class="van-image__img">
+                    <div data-v-0dabd3fc="" class="money">0</div><span data-v-0dabd3fc="">Total
+                        balance</span><!--v-if-->
+                </div>
+
+
+                <div data-v-0dabd3fc="" class="wallet-container-content">
+                    <div data-v-0dabd3fc="" class="container">
+                        <div data-v-0dabd3fc="" class="progressBars">
+                            <div data-v-0dabd3fc="" class="progressBarsL">
+                                <div data-v-0dabd3fc="" class="van-circle"><svg viewBox="0 0 1100 1100"><!---->
+                                    <path class="van-circle__layer" d="" style="fill: none; stroke-width: 100px;">
+                                    </path>
+                                    <path d="" class="van-circle__hover"
+                                        style="stroke-width: 101px; stroke-linecap: butt; stroke-dasharray: 3140px, 3140px;">
+                                    </path>
+                                </svg>
+                                    <div class="van-circle__text">100%</div>
+                                </div>
+                                <h3 data-v-0dabd3fc="" class="WinningBalance">0</h3><span data-v-0dabd3fc="">Third Party wallet</span>
+                            </div>
+                            <div data-v-0dabd3fc="" class="progressBarsR">
+                                <div data-v-0dabd3fc="" class="van-circle"><svg viewBox="0 0 1100 1100"><!---->
+                                    <path class="van-circle__layer" d="" style="fill: none; stroke-width: 100px;">
+                                    </path>
+                                    <path d="" class="van-circle__hover"
+                                        style="stroke-width: 101px; stroke-linecap: butt; stroke-dasharray: 3140px, 3140px;">
+                                    </path>
+                                </svg>
+                                    <div class="van-circle__text">100%</div>
+                                </div>
+                                <h3 data-v-0dabd3fc="" class="money">₹0.00</h3><span data-v-0dabd3fc="">Main Wallet</span>
+                            </div>
+                        </div>
+                        <div data-v-0dabd3fc="" class="recycleBtnD"><button data-v-0dabd3fc="" class="recycleBtn">Main
+                                wallet transfer</button></div>
+                                <div data-v-0dabd3fc="" class="userDetail">
+                                    <div data-v-0dabd3fc="">
+                                        <div data-v-0dabd3fc="" onclick="location.href='/wallet/recharge'" class="imgD"><img
+                                                data-v-0dabd3fc="" src="/images/rechargeIcon-f0c488bf.png"></div><span
+                                            data-v-0dabd3fc="">Deposit</span>
+                                    </div>
+                                    <div data-v-0dabd3fc="">
+                                        <div data-v-0dabd3fc="" onclick="location.href='/wallet/withdrawal'" class="imgD"><img
+                                                data-v-0dabd3fc="" src="/images/widthdrawBlue-8b2a5474.png"></div><span
+                                            data-v-0dabd3fc="">Withdraw</span>
+                                    </div>
+                                    <div data-v-0dabd3fc="">
+                                        <div data-v-0dabd3fc="" onclick="location.href='/wallet/rechargerecord'" class="imgD">
+                                            <img data-v-0dabd3fc="" src="/images/rechargeHistory-65bfbdc9.png" style="    width: 74px;
+                                                height: 57px;">
+                                        </div><span data-v-0dabd3fc="">Deposit history</span>
+                                    </div>
+                                    <div data-v-0dabd3fc="">
+                                        <div data-v-0dabd3fc="" onclick="location.href='/wallet/withdrawalrecord'" class="imgD">
+                                            <img data-v-0dabd3fc="" src="/images/withdrawHistory-572eb30b.png" style="    width: 60px;
+                                                height: 57px;">
+                                        </div><span data-v-0dabd3fc="">Withdrawal history</span>
+                                    </div>
+                                </div>
+        
+                    </div>
+
+                </div>
+
+
+
+             
+            </div>
+
+            <!-- dd -->
+            <%- include('../nav') -%>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="/js/client.js"></script>
+    <script>
+
+        $('#reload .van-image').click(function (e) {
+            e.preventDefault();
+            $(this).addClass('action block-click');
+            setTimeout(() => {
+                $(this).removeClass('action block-click');
+            }, 2500);
+            $.ajax({
+                type: "GET",
+                url: "/api/webapi/GetUserInfo",
+                dataType: "json",
+                success: function (response) {
+                    let user = response.data;
+
+                    $('.wallet-user .name').text(user.name_user);
+                    $('.money').text("₹" + user.money_user + "");
+                    $('.WinningBalance').text('₹' + user.winning_wallet);
+                }
+            });
+        });
+        $.ajax({
+            type: "GET",
+            url: "/api/webapi/GetUserInfo",
+            dataType: "json",
+            success: function (response) {
+                let user = response.data;
+                $('.wallet-user .name').text(user.name_user);
+                $('.money').text("₹" + user.money_user + "");
+                $('.WinningBalance').text('₹' + user.thirdparty_wallet);
+                $('.balance .item:eq(0) div:eq(1)').text("₹" + response.totalRecharge + "");
+                $('.balance .item:eq(1) div:eq(1)').text("₹" + response.totalWithdraw + "");
+            }
+        });
+
+        $('.recycleBtn').click(function (e) {
+            e.preventDefault();
+            $.ajax({
+                type: "POST",
+                url: "/api/webapi/fundTransferGame",
+                data: {
+                    amount: 0,
+                },
+                dataType: "json",
+                success: function (response) {
+                    $(this).addClass('block-click');
+                    if (response.status == true) {
+
+                        console.log(response.money);
+                        $('.money').text('₹' + response.money.toFixed(2));
+                        $('.WinningBalance').text('₹' + response.balance.toFixed(2));
+                    }
+                    alertMess(response.message, $(this));
+                }
+            });
+
+        });
+
+
+        function alertMess(text, sic) {
+            $('body').append(
+                `<div data-v-1dcba851="" class="msg">
+                        <div data-v-1dcba851="" class="msg-content v-enter-active v-enter-to" style="">${text}</div>
+                    </div>`
+            );
+            setTimeout(() => {
+                $('.msg .msg-content').removeClass('v-enter-active v-enter-to');
+                $('.msg .msg-content').addClass('v-leave-active v-leave-to');
+                setTimeout(() => {
+                    $('.msg').remove();
+                }, 100);
+                sic.removeClass('block-click');
+            }, 1000);
+        }
+
+
+    </script>
+</body>
+
+</html>

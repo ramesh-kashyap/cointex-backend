@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html translate="no" data-dpr="1" style="font-size: 47.68px">
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="robots" content="noindex,nofollow" />
+    <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" name="viewport" />
+    <title><%= siteName %></title>
+    <link href="/css/account/chunk-vendors.css" rel="stylesheet" />
+    <link href="/css/account/app.css" rel="stylesheet" />
+    <link rel="shortcut icon" href="/images/bitbug_favicon.png" type="image/x-icon" />
+    <link rel="stylesheet" type="text/css" href="/dynamic-styles.css">
+
+    <style>
+        html,
+        body {
+            height: 100%;
+            width: 100%;
+            background-color: #9195a3;
+            padding: 0;
+            margin: 0;
+        }
+
+        .msg-content {
+            animation: zoom-in 0.45s ease reverse;
+        }
+
+        @keyframes zoom-in {
+            0% {
+                opacity: 1;
+                transform: scale(1, 1);
+            }
+
+            50% {
+                transform: scale(0.6, 0.6);
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(1, 1);
+            }
+        }
+        .mian .login-banner[data-v-a0753f48] {
+    position: relative;
+    /* background: url(/images/login_banner.34f15f30.png) no-repeat top; */
+   /* background-color: #ffb000; */
+   background-image: radial-gradient(ellipse at top left, #ffb000 0%,#ffb000 57%);
+    background-size: 100% 100%;
+    min-height: 1.3rem;
+    max-height: 6.66667rem;
+}
+.login__container-form .activecontent[data-v-748ffe54] {
+    display: block;
+}
+.login__container-form .tab-content[data-v-748ffe54] {
+    display: none;
+}
+html, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, acronym, address, big, cite, code, del, dfn, em, img, ins, kbd, q, s, samp, small, strike, strong, sub, sup, tt, var, b, u, i, center, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td, article, aside, canvas, details, embed, figure, figcaption, footer, header, hgroup, menu, nav, output, ruby, section, summary, time, mark, audio, video {
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    font-size: 100%;
+    vertical-align: baseline;
+    border: 0;
+}
+.phoneInput__container[data-v-93f53084] {
+    margin-bottom: .8rem;
+}
+.phoneInput__container-label__icon[data-v-93f53084] {
+    width: .64rem;
+    height: .64rem;
+    margin-right: .16rem;
+}
+.phoneInput__container-label[data-v-93f53084] {
+    margin-bottom: .32rem;
+    color: #fff;
+    font-size: .4rem;
+}
+.phoneInput__container-input[data-v-93f53084] {
+    gap: .24rem;
+}
+.dropdown[data-v-6f85c91a] {
+    position: absolute;
+    width: 2.48rem;
+    height: 1.17333rem;
+    color: #a6a9ae;
+    text-align: center;
+    line-height: 1.17333rem;
+    background: #484848;
+    outline: none;
+    border-radius: .26667rem;
+}
+.dropdown__value[data-v-6f85c91a] {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    align-items: center;
+    padding-left: .4rem;
+    font-size: .4rem;
+    cursor: pointer;
+}
+.dropdown__list[data-v-6f85c91a] {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 8.61333rem;
+    font-size: .37333rem;
+    height: 4.7rem;
+    text-align: start;
+    /* opacity: 0; */
+    scrollbar-width: none;
+    border-radius: .13333rem;
+    background-color: #484848;
+    overflow: hidden;
+    z-index: 1;
+    overflow-y: scroll;
+    -webkit-transition: opacity .2s ease-in-out, height .2s ease-in-out;
+    transition: opacity .2s ease-in-out, height .2s ease-in-out;
+    padding: 10px;
+}
+.phoneInput__container-input input[data-v-93f53084] {
+    width: 70%;
+    height: 1.17333rem;
+    margin-left: 2.66667rem;
+    padding: .36rem .34667rem;
+    background: #484848;
+    color: #fff;
+    font-size: .37333rem;
+    border: none;
+    border-radius: .26667rem;
+    outline: none;
+}
+.passwordInput__container-label[data-v-9ee19ada], .passwordInput__container-input[data-v-9ee19ada] {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    align-items: center;
+    padding: 0 .02667rem;
+}
+.passwordInput__container-input input[data-v-9ee19ada] {
+    width: 99%;
+    height: 1.17333rem;
+    padding: .36rem .34667rem;
+    font-size: .37333rem;
+    border: none;
+    border-radius: .26667rem;
+    background: #484848;
+    color: #fff;
+    outline: none;
+}
+.passwordInput__container-label__icon[data-v-9ee19ada] {
+    width: .64rem;
+    height: .64rem;
+    margin-right: .16rem;
+}
+.signIn__container-remember[data-v-4b0b5390] .van-checkbox .van-checkbox__label {
+    color: #90929e;
+    font-size: .32rem;
+    line-height: .56rem;
+}
+.signIn__container-button[data-v-4b0b5390] {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    align-items: center;
+    width: 100%;
+    margin-top: .76rem;
+}
+.signIn__container-button .active[data-v-4b0b5390] {
+    background: -webkit-linear-gradient(top, #ffb000 0%, #ffb000 100%);
+    background: linear-gradient(180deg, #ffb000 0%, #ffb000 100%);
+    color: #8f5206;
+}
+.signIn__container-button .register[data-v-4b0b5390] {
+    width: 7.73333rem;
+    height: 1.06667rem;
+    color: #ffb000;
+    font-size: .48rem;
+    background: transparent;
+    border-radius: 1.06667rem;
+    border: .01333rem solid #ffb000;
+    box-shadow: none;
+    text-shadow: none;
+    margin-top: .53333rem;
+}
+input::placeholder {
+    color: #fff;
+}
+.signIn__container-button button[data-v-4b0b5390] {
+    width: 7.73333rem;
+    height: 1.06667rem;
+    color: #fff;
+    font-size: .48rem;
+    font-weight: 700;
+    letter-spacing: .05333rem;
+    text-shadow: 0 .02667rem .01333rem 0 #afb0be;
+    border-radius: 1.06667rem;
+    border: none;
+    background: -webkit-linear-gradient(top, #A9AAB5 0%, #6F7381 100%);
+    background: linear-gradient(180deg, #A9AAB5 0%, #6F7381 100%);
+}
+.passwordInput__container-label[data-v-9ee19ada] {
+    margin-bottom: .32rem;
+    color: #fff;
+    font-size: .4rem;
+}
+.signIn__container .signIn_footer .forgetbg[data-v-4b0b5390] {
+    width: 1.06667rem;
+    height: 1.06667rem;
+    background-image: url(/assets/png/forgetpassword-bd783446.png);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+}
+.signIn__container .signIn_footer .font24[data-v-4b0b5390] {
+    font-size: .32rem;
+    font-weight: 400;
+    color: #a6a9ae;
+    text-align: center;
+}
+.signIn__container .signIn_footer .font24[data-v-4b0b5390] {
+    font-size: .32rem;
+    font-weight: 400;
+    color: #a6a9ae;
+    text-align: center;
+}
+.signIn__container .signIn_footer[data-v-4b0b5390] {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    margin-top: .77333rem;
+    color: #c4933f;
+    font-size: .32rem;
+    -webkit-box-pack: center;
+    -webkit-justify-content: center;
+    justify-content: center;
+}
+.signIn__container .signIn_footer .forgetcon[data-v-4b0b5390], .signIn__container .signIn_footer .customcon[data-v-4b0b5390] {
+    width: 50%;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    -webkit-box-pack: center;
+    -webkit-justify-content: center;
+    justify-content: center;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    align-items: center;
+}
+.signIn__container .signIn_footer .forgetbg[data-v-4b0b5390] {
+    width: 1.06667rem;
+    height: 1.06667rem;
+    background-image: url(images/forgetpassword-bd783446.png);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+}
+.signIn__container .signIn_footer .font24[data-v-4b0b5390] {
+    font-size: .32rem;
+    font-weight: 400;
+    color: #a6a9ae;
+    text-align: center;
+}
+.signIn__container .signIn_footer .custombg[data-v-4b0b5390] {
+    width: 1.06667rem;
+    height: 1.06667rem;
+    background-image: url(images/customer-2c716159.png);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+}
+/* .passwordInput__container-input img[data-v-9ee19ada] {
+    position: absolute;
+    top: 50%;
+    right: .4rem;
+    -webkit-transform: translateY(-50%);
+    transform: translateY(-50%);
+    width: .53333rem;
+    height: auto;
+} */
+
+.passwordInput__container-input img[data-v-9ee19ada] {
+    position: absolute;
+    top: 43%;
+    right: .9rem;
+    -webkit-transform: translateY(-50%);
+    transform: translateY(-50%);
+    width: .53333rem;
+    height: auto;
+}
+.dropdown[data-v-6f85c91a] {
+            position: absolute;
+            width: 2.48rem;
+            height: 1.17333rem;
+            color: #a6a9ae;
+            text-align: center;
+            line-height: 1.17333rem;
+            background: #484848;
+            outline: none;
+            border-radius: .26667rem;
+        }
+
+        .dropdown__value[data-v-6f85c91a] {
+            display: -webkit-box;
+            display: -webkit-flex;
+            display: flex;
+            -webkit-box-align: center;
+            -webkit-align-items: center;
+            align-items: center;
+            padding-left: .4rem;
+            font-size: .4rem;
+            cursor: pointer;
+        }
+
+        .dropdown__value i[data-v-6f85c91a] {
+            margin-left: .13333rem;
+            -webkit-transition: -webkit-transform .3s ease;
+            transition: -webkit-transform .3s ease;
+            transition: transform .3s ease;
+            transition: transform .3s ease, -webkit-transform .3s ease;
+        }
+        .dropdown__list-item span[data-v-5067ef5e] {
+    display: inline-block;
+    width: 1.33333rem;
+}
+.dropdown__list-item[data-v-9ee19ada] {
+    padding-left: .4rem;
+    cursor: pointer;
+}
+
+.navbar.main .navbar-fixed .navbar__content-left .van-icon[data-v-12a80a3e], .navbar.main .navbar-fixed .navbar__content-center[data-v-12a80a3e] {
+    color: #fff;
+}
+
+.navbar__content-center[data-v-12a80a3e] {
+    font-size: .48rem;
+    line-height: .48rem;
+}
+.navbar__content-center .headLogo[data-v-12a80a3e] {
+    /* width: 2.98667rem; */
+    height: 1.5rem;
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center;
+}
+
+/* .dropdown__list[data-v-9ee19ada] {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 8.61333rem;
+    font-size: .37333rem;
+    height: .26667rem;
+    text-align: start;
+    opacity: 0;
+    border-radius: .13333rem;
+    background-color: var(--bg_color_L2);
+    overflow: hidden;
+    z-index: 1;
+    overflow-y: scroll;
+    -webkit-transition: opacity .2s ease-in-out, height .2s ease-in-out;
+    transition: opacity .2s ease-in-out, height .2s ease-in-out;
+} */
+    </style>
+</head>
+
+<body style="font-size: 12px">
+    <div id="app">
+        <div data-v-a0753f48="" class="mian login">
+            <div data-v-a0753f48="" class="login-banner">
+                <div data-v-a0753f48="" class="bankPage c-row c-row-middle-center">
+                    <div data-v-a0753f48="" class="bank c-row c-row-middle-center" onclick="location.href='/register'">
+                        <img data-v-a0753f48="" src="/images/back.c3244ab0_1.png" class="navbar-back" />
+                    </div>
+                </div>
+                <div data-v-12a80a3e="" class="navbar__content-center"><div data-v-12a80a3e="" class="headLogo" style="background-image: url(&quot;<%=Logo%>&quot;);    margin-top: -47px;"></div><div data-v-12a80a3e="" class="navbar__content-title"></div></div>
+
+            </div>
+            <div data-v-a0753f48="" class="login-box" style="padding-bottom: 50px;">
+                <div data-v-a0753f48="" class="tit">Login Account </div>
+                <div data-v-748ffe54="" class="tab-content activecontent">
+                    <div data-v-4b0b5390="" data-v-748ffe54="" class="signIn__container">
+                        <div data-v-93f53084="" data-v-4b0b5390="" class="phoneInput__container">
+                            <div data-v-93f53084="" class="phoneInput__container-label"><img data-v-93f53084=""
+                                    src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAGDSURBVHgB7ZnNTcNAEIXfOOGeEuiAcEFEuVBCJILELXEF0EGcDqAChxtS0gO+QMTNVID7IHgY83Mju4uyzghpPsmnfWvN8/5YmgcYxk5QqPAxv+h3iCcM9NEiUlDJ3L0dpPdVoN7P8914VjMy7BNCNpis5n6ZB5Xifwgw4TSwzi8PQZtXKNJhOj5Jl+W28cQ1mfF2DWU2qKeucacBIjqCMr4anAb+A2ZAGzOgjRnQxgxoYwa0MQPamAFtzIA2ZsDYEWdb5Sk/HxGSHlThapCuim2jXcfMpiNwJS84gy7F9/Mrdoi16SIuhWy8yiWQ7naPwCNEIpoBAi1Op8s0RLvOxwuZMEEEom2hmvklVCurUCIS8VZAbiz5st7CEnCv/rrdEIOIZ4ClFY8Hn6r+/PXEKb7BrlFt3AHHHw5mW/hq8CQ0yQLKEA5uXONOA8Mmm2J4k8K2kHBx7otbg2JWuR4zUc6wR5rih+kq8+mCg+4msSQJ/bjl3Ixkz7/L1h06kknDiMgH3mlqrSokw/4AAAAASUVORK5CYII="
+                                    class="phoneInput__container-label__icon"><span data-v-93f53084="">Phone
+                                    number</span></div>
+                                    <div data-v-93f53084="" class="phoneInput__container-input">
+                                        <div data-v-6f85c91a="" data-v-93f53084="" class="dropdown">
+                                            <div data-v-6f85c91a="" class="dropdown__value" id="dropdownValue">
+                                                <span data-v-6f85c91a="">+91</span>
+                                                <i data-v-6f85c91a=""
+                                                    class="van-badge__wrapper van-icon van-icon-arrow-down"></i>
+                                            </div>
+                                            <div data-v-6f85c91a="" class="dropdown__list active" id="dropdownList">
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+1')">+1 USA</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+66')">+66 Thailand</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+62')">+62 Indonesia</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+95')">+95 Myanmar</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+971')">+971 United Arab Emirates
+                                                    (&#x202B;الإمارات العربية المتحدة&#x202C;&lrm;)</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+54')">+54 Argentina</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+880')">+880 Bangladesh (বাংলাদেশ)</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+975')">+975 Bhutan (འབྲུག)</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+267')">+267 Botswana</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+1')">+1 Canada</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+235')">+235 Chad (Tchad)</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+269')">+269 Comoros (&#x202B;جزر
+                                                    القمر&#x202C;&lrm;)</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+243')">+243 Congo (DRC) (Jamhuri ya
+                                                    Kidemokrasia ya Kongo)</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+20')">+20 Egypt
+                                                    (&#x202B;مصر&#x202C;&lrm;)</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+33')">+33 France</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+995')">+995 Georgia (საქართველო)</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+233')">+233 Ghana (Gaana)</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+91')">+91 India (भारत)</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+39')">+39 Italy (Italia)</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+7')">+7 Kazakhstan (Казахстан)</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+254')">+254 Kenya</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+383')">+383 Kosovo</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+231')">+231 Liberia</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+218')">+218 Libya
+                                                    (&#x202B;ليبيا&#x202C;&lrm;)</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+212')">+212 Morocco
+                                                    (&#x202B;المغرب&#x202C;&lrm;)</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+977')">+977 Nepal (नेपाल)</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+234')">+234 Nigeria</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+92')">+92 Pakistan
+                                                    (&#x202B;پاکستان&#x202C;&lrm;)</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+51')">+51 Peru (Perú)</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+974')">+974 Qatar
+                                                    (&#x202B;قطر&#x202C;&lrm;)</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+7')">+7 Russia (Россия)</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+250')">+250 Rwanda</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+966')">+966 Saudi Arabia
+                                                    (&#x202B;المملكة العربية السعودية&#x202C;&lrm;)</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+27')">+27 South Africa</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+94')">+94 Sri Lanka (ශ්&zwj;රී ලංකාව)
+                                                </div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+249')">+249 Sudan
+                                                    (&#x202B;السودان&#x202C;&lrm;)</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+255')">+255 Tanzania</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+90')">+90 Turkey (Türkiye)</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+39')">+39 Vatican City (Città del
+                                                    Vaticano)</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+212')">+212 Western Sahara
+                                                    (&#x202B;الصحراء الغربية&#x202C;&lrm;)</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+260')">+260 Zambia</div>
+                                                <div data-v-6f85c91a="" class="dropdown__list-item"
+                                                    onclick="selectCountryCode('+263')">+263 Zimbabwe</div>
+                                            </div>
+                                        </div>
+                                        <input data-v-93f53084="" type="text" id="username"
+                                            placeholder="Please enter phone number"
+                                            oninput="value=value.replace(/\D/g,'')">
+                                    </div>
+                        </div>
+                        <div data-v-9ee19ada="" data-v-4b0b5390="" class="passwordInput__container">
+                            <div data-v-9ee19ada="" class="passwordInput__container-label"><img data-v-9ee19ada=""
+                                    class="passwordInput__container-label__icon"
+                                    src="/images/padlock_1073162.png"><span
+                                    data-v-9ee19ada="">Password</span></div>
+                            <div data-v-9ee19ada="" class="passwordInput__container-input">
+                                <input data-v-9ee19ada="" type="password" placeholder="Password" maxlength="32" autocomplete="new-password" id="password">
+                                <img data-v-9ee19ada="" src="images/eyeInvisible-2fa5c152.png" class="eye" id="togglePassword" onclick="togglePasswordVisibility()">
+                                <img data-v-9ee19ada="" src="images/eyeVisible-7bc1c956.png" class="eye" id="togglePassword" onclick="togglePasswordVisibility()">                                                                   
+                            </div>
+                        </div>
+                        <div data-v-4b0b5390="" class="signIn__container-remember">
+                            <div data-v-4b0b5390="" role="checkbox" class="van-checkbox" tabindex="0"
+                                aria-checked="true">
+                                <div class="van-checkbox__icon van-checkbox__icon--round van-checkbox__icon--checked"><i
+                                        class="van-badge__wrapper van-icon van-icon-success"
+                                        style="border-color: rgb(199, 160, 84); background-color: rgb(199, 160, 84);">
+                                        </i></div><span class="van-checkbox__label">Remember password</span>
+                            </div>
+                        </div>
+                        <div data-v-4b0b5390="" class="signIn__container-button"><button data-v-4b0b5390=""
+                                class="active">Log in</button><button data-v-4b0b5390=""
+                                class="register" onclick="location.href='/register'">Register</button></div>
+                        <div data-v-4b0b5390="" class="signIn_footer"  onclick="location.href='/forgot'">
+                            <div data-v-4b0b5390="" class="forgetcon">
+                                <div data-v-4b0b5390="" class="forgetbg"></div>
+                                <div data-v-4b0b5390="" class="font24">Forgot password</div>
+                            </div>
+                            <div data-v-4b0b5390="" class="customcon">
+                                <div data-v-4b0b5390="" class="custombg"></div>
+                                <div data-v-4b0b5390="" class="font24">Customer Service</div>
+                            </div>
+                        </div>
+                        
+                        <div data-v-5acdbb67="" data-v-4b0b5390="" class="popups">
+                            <!---->
+                            <!---->
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+    </div>
+<style>
+    .customer {
+    position: fixed;
+    bottom: 2.4rem;
+    right: .4rem;
+    width: 1.49333rem;
+    height: 1.49333rem;
+    border-radius: 50%;
+    z-index: 100;
+}
+.customer img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+}
+</style>
+    <div class="customer"   onclick="location.href='https://t.me/playflix_official'" id="customerId"  style="--f13b4d11-currentFontFamily: 'Roboto', 'Inter', sans-serif; --f6a705e1-currentFontFamily: bahnschrift;"><img class=""  src="/images/customer-service-support.png"></div>
+
+
+    <div class="van-overlay" style="z-index: 2003; display: none;"></div>
+    <div class="alert-toast"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script>
+        function setCookie(cname, cvalue, exdays) {
+            const d = new Date();
+            d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+            let expires = "expires=" + d.toUTCString();
+            document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+        }
+        function getCookie(cname) {
+            let name = cname + "=";
+            let decodedCookie = decodeURIComponent(document.cookie);
+            let ca = decodedCookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(name) == 0) {
+                    return c.substring(name.length, c.length);
+                }
+            }
+            return "";
+        }
+
+        function unsetCookie() {
+            setCookie('token', '', 0);
+            setCookie('auth', '', 0);
+        }
+        // $.ajax({
+        //     type: "GET",
+        //     url: "/api/webapi/GetUserInfo",
+        //     data: {
+                
+        //     },
+        //     dataType: "json",
+        //     success: function (response) {
+        //         if (data.status === false) {
+        //             unsetCookie();
+        //             return false;
+        //         };
+        //         location.href = "/";
+        //     }
+        // });
+        // fetch('/api/webapi/GetUserInfo')
+        //     .then(response => response.json())
+        //     .then(data => {
+        //         console.log(data);
+        //         if (data.status === false) {
+        //             unsetCookie();
+        //             return false;
+        //         };
+        //         location.href = "/";
+        //     });
+    </script>
+    <script>
+        function setCookie(cname, cvalue, exdays) {
+            const d = new Date();
+            d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+            let expires = "expires=" + d.toUTCString();
+            document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+        }
+
+        function alertMess(text) {
+            let length = $('.alert-toast .msg').length;
+            if (length == 0) {
+                $('.alert-toast').append(
+                    `
+                    <div data-v-1dcba851="" class="msg">
+                        <div data-v-1dcba851="" class="msg-content" style=""> ${text} </div>
+                    </div>
+                    `
+                );
+                setTimeout(() => {
+                    $('.msg').fadeOut();
+                    setTimeout(() => {
+                        $('.alert-toast .msg').remove();
+                    }, 100);
+                }, 1500);
+            }
+        }
+
+        function validateForm(username, password, text) {
+            if (!username || !password) {
+                alertMess(text);
+                return false;
+            } else {
+                return true;
+            }
+        }
+
+        $('button').click(async (e) => {
+            e.preventDefault();
+            let username = $('input:eq(0)').val().trim();
+            let password = $('input:eq(1)').val().trim();
+            let status = validateForm(username, password, 'Please fill in the necessary part.');
+            if (status) {
+                $('.van-overlay').fadeIn(10);
+                $.ajax({
+                    type: "POST",
+                    url: "/api/webapi/login",
+                    data: {
+                        username: username,
+                        pwd: password,
+                    },
+                    dataType: "json",
+                    success: function (response) {
+                        if (response.status === true) {
+                            $('.van-overlay').fadeOut(300);
+                            $('.Loading').fadeIn(10);
+                            setCookie('token', response.token, 1);
+                            setCookie('auth', response.value, 1);
+                            // alertMess(response.message);
+                            setTimeout(() => {
+                                location.href = '/home';
+                            }, 500);
+                        } else {
+                            $('.van-overlay').fadeOut(300);
+                            alertMess(response.message);
+                        }
+                    }
+                });
+            }
+
+        });
+    </script>
+    <script>
+        let getWBody = $('.mian').width();
+
+        $('html').css('font-size', `${getWBody / 10}px`);
+        $('.van-tabbar .van-tabbar-item').css({
+            'transform': 'scale(0.9)',
+        });
+        $(window).resize(() => {
+            let getWBody = $('.mian').width();
+            $('html').css('font-size', `${getWBody / 10}px`);
+            $('.van-tabbar .van-tabbar-item').css({
+                'transform': 'scale(0.9)',
+            });
+        });
+    </script>
+      <script>
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('password');
+            const togglePassword = document.getElementById('togglePassword');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                togglePassword.src = 'images/eyeVisible-7bc1c956.png'; // Change the image to visible icon
+            } else {
+                passwordInput.type = 'password';
+                togglePassword.src = 'images/eyeInvisible-2fa5c152.png'; // Change the image back to invisible icon
+            }
+        }
+    </script>
+       <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>    
+       <script>
+           // Initialize the dropdown state on page load
+       document.addEventListener('DOMContentLoaded', function() {
+           const dropdownList = document.getElementById('dropdownList');
+           dropdownList.style.display = 'none';
+       });
+   
+           document.getElementById('dropdownValue').addEventListener('click', function() {
+               const dropdownList = document.getElementById('dropdownList');
+               dropdownList.style.display = dropdownList.style.display === 'none' || dropdownList.style.display === '' ? 'block' : 'none';
+           });
+       
+           function selectCountryCode(code) {
+               document.getElementById('dropdownValue').getElementsByTagName('span')[0].textContent = code;
+               document.getElementById('dropdownList').style.display = 'none';
+           }
+       
+           window.onclick = function(event) {
+               if (!event.target.matches('.dropdown__value, .dropdown__value *')) {
+                   const dropdownList = document.getElementById('dropdownList');
+                   if (dropdownList.style.display === 'block') {
+                       dropdownList.style.display = 'none';
+                   }
+               }
+           }
+       </script>
+</body>
+
+</html>
