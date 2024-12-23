@@ -1,18 +1,23 @@
-// Import the express module
 const express = require('express');
+const dotenv = require('dotenv');
 
-// Create an Express application
+// Load environment variables from .env file
+dotenv.config();
+const cors = require('cors'); 
+ 
+// Initialize Express app
 const app = express();
 
-// Define the port the server will run on
-const port = 3000;  // You can change this to any port you prefer
+// Import the database connection (this will use environment variables set by dotenv)
+require('./src/config/database');
 
-// Create a simple route that responds with 'Hello, World!' when accessed
-app.get('/', (req, res) => {
-  res.send('Hello, World!');
-});
+// Import routes
+const routes = require('./src/routes/web');
+app.use(cors());
+// Use the routes for '/auth' path
+app.use('/auth', routes);
 
-// Start the server and listen for incoming requests
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+// Start the server
+app.listen(5000, () => {
+  console.log('Server running on http://localhost:5000');
 });
