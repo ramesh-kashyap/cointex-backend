@@ -290,10 +290,7 @@ const resetPass =async (req, res)=>{
     if(user.length){
       const hashedPassword = await bcrypt.hash(password, 10);
       await connection.query("UPDATE users SET password = ? WHERE phone = ?",[hashedPassword, phone]);     // await connection.query("UPDATE users SET PSD = ? WHERE phone = ?",[password, phone]);
-      
-      const generateOTP = Math.floor(100000 + Math.random() * 900000);
-      await connection.query("INSERT INTO otp_verification (otp, phone) VALUES (?, ?)", [generateOTP, phone]);
-
+    
       return res.status(200).json({ message: "Password updated successfully!" });
     }
     else {
