@@ -89,51 +89,51 @@ const formRegister = async (req, res) => {
   }
 };
 
-// const verifyOtp = async (req, res) => {
-//   const { userId, otp } = req.body;
+const verifyOtp = async (req, res) => {
+  const { userId, otp } = req.body;
 
-//   try {
-//       // Fetch OTP from the database
-//       const [otpRecord] = await connection.query('SELECT * FROM otp_verification WHERE user_id = ? ORDER BY created_at DESC LIMIT 1', [userId]);
+  try {
+      // Fetch OTP from the database
+      const [otpRecord] = await connection.query('SELECT * FROM otp_verification WHERE user_id = ? ORDER BY created_at DESC LIMIT 1', [userId]);
 
-//       if (!otpRecord.length) {
-//           return res.status(400).json({ message: 'OTP not found or expired' });
-//       }
+      if (!otpRecord.length) {
+          return res.status(400).json({ message: 'Invalid OTP' });
+      }
 
-//       const { otp: storedOtp, expiry_time } = otpRecord[0];
+      const { otp: storedOtp, expiry_time } = otpRecord[0];
 
-//       // Check if OTP is expired
-//       if (Date.now() > expiry_time) {
-//           return res.status(400).json({ message: 'OTP expired' });
-//       }
+      // Check if OTP is expired
+      if (Date.now() > expiry_time) {
+          return res.status(400).json({ message: 'OTP expired' });
+      }
 
-//       // Check if OTP is correct
-//       if (storedOtp !== otp) {
-//           return res.status(400).json({ message: 'Invalid OTP' });
-//       }
+      // Check if OTP is correct
+      if (storedOtp !== otp) {
+          return res.status(400).json({ message: 'Invalid OTP' });
+      }
 
-//       // OTP verified, delete OTP from the database
-//       await connection.query('DELETE FROM otp_verification WHERE user_id = ?', [userId]);
+      // OTP verified, delete OTP from the database
+      await connection.query('DELETE FROM otp_verification WHERE user_id = ?', [userId]);
 
-//       // Generate a new JWT token for login
-//       const token = jwt.sign(
-//           { userId },
-//           process.env.JWT_SECRET,
-//           { expiresIn: '1h' } // Token expiry
-//       );
+      // Generate a new JWT token for login
+      const token = jwt.sign(
+          { userId },
+          process.env.JWT_SECRET,
+          { expiresIn: '1h' } // Token expiry
+      );
 
-//       // Respond with token and redirect to the dashboard (or any other appropriate location)
-//       res.status(200).json({
-//           message: 'OTP verified successfully',
-//           token,
-//           userId,
-//       });
+      // Respond with token and redirect to the dashboard (or any other appropriate location)
+      res.status(200).json({
+          message: 'OTP verified successfully',
+          token,
+          userId,
+      });
 
-//   } catch (error) {
-//       console.error('Error during OTP verification:', error);
-//       res.status(500).json({ message: 'Internal server error' });
-//   }
-// };
+  } catch (error) {
+      console.error('Error during OTP verification:', error);
+      res.status(500).json({ message: 'Internal server error' });
+  }
+};
 
 // const formRegister = async(req, res)=>{
   
@@ -245,6 +245,7 @@ const loginHandler = async (req, res) => {
       message: 'Login successful',
       token,
       user: {
+        
         id: user.id,
         name: user.name,
         phone: user.phone,

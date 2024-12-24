@@ -17,6 +17,7 @@ router.post('/login',authController.loginValidator,authController.loginHandler);
 router.post('/forget', authController.forgetValidator, authController.formForget)
 router.post('/reset', authController.resetValidator, authController.resetPass)
 // router.post('/verify-otp', verifyOtp);
+router.post('/verify-otp',authController.verifyOtp);
 // Google Authentication Routes
 
 
