@@ -5,7 +5,7 @@ const express = require('express');
 const app = express();
 
 // Define the port the server will run on
-const port = 3000;  // You can change this to any port you prefer
+const port = 3001;  // You can change this to any port you prefer
 
 // Create a simple route that responds with 'Hello, World!' when accessed
 app.get('/', (req, res) => {
