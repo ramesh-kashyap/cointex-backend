@@ -8,150 +8,200 @@ const bcrypt = require('bcrypt');
 const { body, validationResult } = require('express-validator');
 const crypto = require('crypto');
 
-const googleLogin = async (req, res) => {
+// const twilio = require('twilio'); // Assuming you're using Twilio for SMS
+
+const otpExpiry = 5 * 60 * 1000;
+
+
+const formRegister = async (req, res) => {
+  const { name, phone, password, referralCode } = req.body;
+
   try {
-    const { code } = req.query;
-
-    // Get the tokens from Google using the authorization code
-    const googleRes = await oauth2client.getToken(code);
-
-    // Set the credentials using the tokens from Google
-    oauth2client.setCredentials(googleRes.tokens);
-
-    // Fetch the user's profile information from Google
-    const userRes = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
-      headers: {
-        Authorization: `Bearer ${googleRes.tokens.access_token}`,
-      },
-    });
-
-    // Get user details from the response
-    const { sub, name, email, picture } = userRes.data;
-
-    // Generate a random integer for the username
-    const randomUsername = Math.floor(Math.random() * 1000000); // Generates a random integer between 0 and 999999
-
-    // Insert or update the user into the database
-    const query = `
-      INSERT INTO users (google_id, username, name, email, picture)
-      VALUES (?, ?, ?, ?, ?)
-      ON DUPLICATE KEY UPDATE name = ?, email = ?, picture = ?, username = ?
-    `;
-    const values = [sub, randomUsername, name, email, picture, name, email, picture, randomUsername];
-
-    // Execute the query securely using parameterized queries (prevents SQL injection)
-    connection.execute(query, values, (err, result) => {
-      if (err) {
-        console.error('Error inserting user into database:', err);
-        return res.status(500).json({ error: 'Database error' });
+      // Check if phone is already registered
+      const [existingUser] = await connection.query('SELECT * FROM users WHERE phone = ?', [phone]);
+      if (existingUser.length) {
+          return res.status(400).json({ message: 'Phone number is already registered' });
       }
 
-      // Generate a JWT token for the user
-      const token = jwt.sign(
-        { userId: result.insertId, googleId: sub },
-        process.env.JWT_SECRET, // Ensure you have a secret key in your .env file
-        { expiresIn: '1h' } // The token will expire in 1 hour
+      // Validate referral code (if provided)
+      let referreconnectiony = null;
+      if (referralCode) {
+          const [referrer] = await connection.query('SELECT * FROM users WHERE referral_code = ?', [referralCode]);
+          if (!referrer.length) {
+              return res.status(400).json({ message: 'Invalid referral code' });
+          }
+
+          referreconnectiony = referrer[0].username;
+      }
+
+      // Hash the password securely
+      const SALT_ROUNDS = 10;
+      const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+
+      // Generate a unique referral code
+      const generateReferralCode = () => crypto.randomBytes(5).toString('hex').toUpperCase();
+      const referralCodeForUser = generateReferralCode();
+      const randomUsername = Math.floor(Math.random() * 1000000);
+
+      // Insert user into the database
+      const [result] = await connection.query(
+          'INSERT INTO users (name, phone, username, password, referral_code, referred_by) VALUES (?, ?, ?, ?, ?, ?)',
+          [name, phone, randomUsername, hashedPassword, referralCodeForUser, referreconnectiony]
       );
 
-      // Successfully stored the user data, respond with a success message and the JWT token
-      res.status(200).json({
-        message: 'User authenticated and data saved successfully',
-        token: token,  // Send the JWT token
-        user: { name, email, picture }, // Send the user data
-        userId: result.insertId,
-      });
-    });
+      const userId = result.insertId;
 
-  } catch (err) {
-    console.error('Error during Google login:', err);
-    res.status(500).json({ error: 'Internal server error' });
+      // Generate OTP
+      const otp = Math.floor(100000 + Math.random() * 900000); // Generate a 6-digit OTP
+
+      // Store OTP in the database or memory with expiry time
+      const otpExpiryTime = Date.now() + otpExpiry;
+      await connection.query(
+          'INSERT INTO otp_verification (user_id, otp, expiry_time) VALUES (?, ?, ?)',
+          [userId, otp, otpExpiryTime]
+      );
+
+      // Send OTP via SMS (Twilio or any SMS service)
+      // const client = twilio(process.env.TWILIO_SID, process.env.TWILIO_AUTH_TOKEN);
+      // await client.messages.create({
+      //     body: `Your OTP code is: ${otp}`,
+      //     from: process.env.TWILIO_PHONE_NUMBER,
+      //     to: phone,
+      // });
+
+      // Generate JWT token (without OTP verification)
+      const token = jwt.sign(
+          { userId, name, phone },
+          process.env.JWT_SECRET,
+          { expiresIn: '1h' } // Short expiry for access token
+      );
+
+      // Respond with OTP sent and token
+      res.status(201).json({
+          message: 'User registered successfully. Please verify your OTP.',
+          token,
+          userId,
+      });
+
+  } catch (error) {
+      console.error('Error during registration:', error);
+      res.status(500).json({ message: 'Internal server error' });
   }
 };
 
-const validateRegistration = [
-  body('name')
-      .isString().notEmpty().withMessage('Name is required')
-      .isLength({ min: 3 }).withMessage('Name must be at least 3 characters'),
-  body('phone')
-      .isMobilePhone().withMessage('Phone number must be valid')
-      .notEmpty().withMessage('Phone number is required'),
-  body('password')
-      .isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
-      .matches(/[A-Z]/).withMessage('Password must contain at least one uppercase letter')
-      .matches(/[a-z]/).withMessage('Password must contain at least one lowercase letter')
-      .matches(/[0-9]/).withMessage('Password must contain at least one number')
-      .matches(/[@$!%*?&#]/).withMessage('Password must contain at least one special character'),
-  body('referralCode').optional().isString().withMessage('Referral code must be a valid string')
-];
+// const verifyOtp = async (req, res) => {
+//   const { userId, otp } = req.body;
 
+//   try {
+//       // Fetch OTP from the database
+//       const [otpRecord] = await connection.query('SELECT * FROM otp_verification WHERE user_id = ? ORDER BY created_at DESC LIMIT 1', [userId]);
 
-const formRegister = async(res,req)=>{
+//       if (!otpRecord.length) {
+//           return res.status(400).json({ message: 'OTP not found or expired' });
+//       }
+
+//       const { otp: storedOtp, expiry_time } = otpRecord[0];
+
+//       // Check if OTP is expired
+//       if (Date.now() > expiry_time) {
+//           return res.status(400).json({ message: 'OTP expired' });
+//       }
+
+//       // Check if OTP is correct
+//       if (storedOtp !== otp) {
+//           return res.status(400).json({ message: 'Invalid OTP' });
+//       }
+
+//       // OTP verified, delete OTP from the database
+//       await connection.query('DELETE FROM otp_verification WHERE user_id = ?', [userId]);
+
+//       // Generate a new JWT token for login
+//       const token = jwt.sign(
+//           { userId },
+//           process.env.JWT_SECRET,
+//           { expiresIn: '1h' } // Token expiry
+//       );
+
+//       // Respond with token and redirect to the dashboard (or any other appropriate location)
+//       res.status(200).json({
+//           message: 'OTP verified successfully',
+//           token,
+//           userId,
+//       });
+
+//   } catch (error) {
+//       console.error('Error during OTP verification:', error);
+//       res.status(500).json({ message: 'Internal server error' });
+//   }
+// };
+
+// const formRegister = async(req, res)=>{
   
-    // Validate inputs
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-    }
+ 
 
-    const { name, phone, password, referralCode } = req.body;
+//     const { name, phone, password, referralCode } = req.body;
+//     console.log('Request Body:', req.body);
+//     try {
+//         // Check if phone is already registered
+//         const [existingUser] = await connection.query('SELECT * FROM users WHERE phone = ?', [phone]);
+//         console.log('Request Body:', existingUser);
+//         if (existingUser.length) {
+//             return res.status(400).json({ message: 'Phone number is already registered' });
+//         }
 
-    try {
-        // Check if phone is already registered
-        const [existingUser] = await db.query('SELECT * FROM users WHERE phone = ?', [phone]);
-        if (existingUser) {
-            return res.status(400).json({ message: 'Phone number is already registered' });
-        }
+//         // Validate referral code (if provided)
+//         let referreconnectiony = null;
+//         if (referralCode.length) {
+//             const [referrer] = await connection.query('SELECT * FROM users WHERE referral_code = ?', [referralCode]);
+//             if (!referrer.length) {
+//                 return res.status(400).json({ message: 'Invalid referral code' });
+//             }
+            
+//             referreconnectiony = referrer[0].username;
+//             console.log('Referrer username:', referreconnectiony);
+//         }
+//         const SALT_ROUNDS = 10;
+//         // Hash the password securely
+//         const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+        
+//         // Generate a unique referral code
+//         const generateReferralCode = () =>
+//             crypto.randomBytes(5).toString('hex').toUpperCase();
 
-        // Validate referral code (if provided)
-        let referredBy = null;
-        if (referralCode) {
-            const [referrer] = await db.query('SELECT id FROM users WHERE referral_code = ?', [referralCode]);
-            if (!referrer) {
-                return res.status(400).json({ message: 'Invalid referral code' });
-            }
-            referredBy = referrer.id;
-        }
+//         const referralCodeForUser = generateReferralCode();
+//         const randomUsername = Math.floor(Math.random() * 1000000);
+//         // Create user in the database
+//         const [result] = await connection.query(
+//             'INSERT INTO users (name, phone,username, password, referral_code, referred_by) VALUES (?, ?, ?, ?, ?,?)',
+//             [name, phone,randomUsername, hashedPassword, referralCodeForUser, referreconnectiony]
+//         );
+//         console.log("Inserting data:", name, phone, hashedPassword, referralCodeForUser, referreconnectiony);
 
-        // Hash the password securely
-        const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+//         const userId = result.insertId;
 
-        // Generate a unique referral code
-        const generateReferralCode = () =>
-            crypto.randomBytes(5).toString('hex').toUpperCase();
+//         // Generate JWT token
+//         const token = jwt.sign(
+//             { userId, name, phone },
+//             process.env.JWT_SECRET,
+//             { expiresIn: '1h' } // Short expiry for access token
+//         );
 
-        const referralCodeForUser = generateReferralCode();
-
-        // Create user in the database
-        const [result] = await db.query(
-            'INSERT INTO users (name, phone, password, referral_code, referred_by) VALUES (?, ?, ?, ?, ?)',
-            [name, phone, hashedPassword, referralCodeForUser, referredBy]
-        );
-
-        const userId = result.insertId;
-
-        // Generate JWT token
-        const token = jwt.sign(
-            { userId, name, phone },
-            SECRET_KEY,
-            { expiresIn: '1h' } // Short expiry for access token
-        );
-
-        // Send response with token
-        res.status(201).json({
-            message: 'User registered successfully',
-            token,
-            user: {
-                id: userId,
-                name,
-                phone,
-                referralCode: referralCodeForUser,
-            },
-        });
-    } catch (error) {
-        console.error('Error during registration:', error);
-        res.status(500).json({ message: 'Internal server error' });
-    }
-}
+//         // Send response with token
+//         res.status(201).json({
+//             message: 'User registered successfully',
+//             token,
+//             user: {
+//                 id: userId,
+//                 name,
+//                 phone,
+//                 referralCode: referralCodeForUser,
+//             },
+//         });
+//     } catch (error) {
+//         console.error('Error during registration:', error);
+//         res.status(500).json({ message: 'Internal server error' });
+//     }
+// }
 
 // Login validation middleware
 const loginValidator = [
@@ -171,7 +221,7 @@ const loginHandler = async (req, res) => {
 
   try {
     // Check if the user exists
-    const [user] = await db.query('SELECT * FROM users WHERE phone = ?', [phone]);
+    const [user] = await connection.query('SELECT * FROM users WHERE phone = ?', [phone]);
     
     if (!user) {
       return res.status(400).json({ message: 'User not found' });
@@ -186,7 +236,7 @@ const loginHandler = async (req, res) => {
     // Generate JWT token
     const token = jwt.sign(
       { userId: user.id, phone: user.phone, name: user.name },
-      SECRET_KEY,
+      process.env.JWT_SECRET,
       { expiresIn: '1h' } // Token expiry
     );
 
@@ -206,5 +256,5 @@ const loginHandler = async (req, res) => {
   }
 };
 
-module.exports = { loginValidator,validateRegistration, formRegister,loginHandler, googleLogin  };
+module.exports = { loginValidator, formRegister,loginHandler };
 
