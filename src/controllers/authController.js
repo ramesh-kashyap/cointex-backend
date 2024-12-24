@@ -256,5 +256,58 @@ const loginHandler = async (req, res) => {
   }
 };
 
-module.exports = { loginValidator, formRegister,loginHandler };
+
+// forget password 
+const forgetValidator = [
+  body('phone').isMobilePhone().withMessage('This number is not exist!'),
+];
+
+const formForget = async (req, res) => {
+  const {phone} = req.body;
+
+  try {
+      // Check if phone is registered
+      const [existingUser] = await connection.query('SELECT * FROM users WHERE phone = ?', [phone]);
+      if (existingUser.length) {
+          return res.status(200).json({ message: 'Create New Password', phone });
+      }
+  } catch (error) {
+      console.error('Error during forget password:', error);
+      res.status(500).json({ message: 'Invalid Number or email' });
+  }
+};
+
+// reset password
+      const resetValidator = [
+        body('password').notEmpty().withMessage('Password error'),
+      ];
+
+const resetPass =async (req, res)=>{
+  const { phone, password } = req.body;
+  try{    
+    const[user] = await connection.query("SELECT * FROM users WHERE phone = ?", [phone]);
+    console.log(user);
+    if(user.length){
+      const hashedPassword = await bcrypt.hash(password, 10);
+      await connection.query("UPDATE users SET password = ? WHERE phone = ?",[hashedPassword, phone]);     // await connection.query("UPDATE users SET PSD = ? WHERE phone = ?",[password, phone]);
+      
+      const generateOTP = Math.floor(100000 + Math.random() * 900000);
+      await connection.query("INSERT INTO otp_verification (otp, phone) VALUES (?, ?)", [generateOTP, phone]);
+
+      return res.status(200).json({ message: "Password updated successfully!" });
+    }
+    else {
+      return res.status(404).json({ message: "Phone number not found!" });
+    }
+  }
+  catch(error){
+    console.error("Error during password reset:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+}
+
+
+
+
+module.exports = { loginValidator, forgetValidator,resetValidator, formRegister,loginHandler,formForget, resetPass };
 
