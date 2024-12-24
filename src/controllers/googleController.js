@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 const googleLogin = async (req, res) => {
   try {
     const { code } = req.query;
-
+console.log('query chekc:', code );
     // Ensure the 'code' is provided in the query
     if (!code) {
       return res.status(400).json({ message: 'Authorization code is required' });
