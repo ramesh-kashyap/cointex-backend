@@ -14,7 +14,7 @@ res.send('hello');
 router.get('/google',googleController.googleLogin);
 router.post('/register', validateRegistration,handleValidationErrors,authController.formRegister);
 router.post('/login',authController.loginValidator,authController.loginHandler);
-// router.post('/verify-otp', verifyOtp);
+router.post('/verify-otp',authController.verifyOtp);
 // Google Authentication Routes
 
 

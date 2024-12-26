@@ -9,7 +9,7 @@ const validateRegistration = [
     body('name')
         .isString().notEmpty().withMessage('Name is required'),
     body('phone')
-        .isMobilePhone().withMessage('Phone number must be valid')
+      
         .notEmpty().withMessage('Phone number is required'),
     body('password')
         .isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
