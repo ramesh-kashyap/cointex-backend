@@ -70,16 +70,11 @@ const formRegister = async (req, res) => {
       // });
 
       // Generate JWT token (without OTP verification)
-      const token = jwt.sign(
-          { userId, name, phone },
-          process.env.JWT_SECRET,
-          { expiresIn: '1h' } // Short expiry for access token
-      );
-
+      
       // Respond with OTP sent and token
       res.status(201).json({
           message: 'User registered successfully. Please verify your OTP.',
-          token,
+       
           userId,
       });
 
@@ -90,11 +85,17 @@ const formRegister = async (req, res) => {
 };
 
 const verifyOtp = async (req, res) => {
-  const { userId, otp } = req.body;
+  const { phone, otp } = req.body;
 
   try {
+
+    const [rows] = await connection.query('SELECT * FROM users WHERE phone = ?', [phone]);
+    const user = rows[0]; // Get the first user
+    const userID = user.id; 
+    console.log('hello',userID);
+
       // Fetch OTP from the database
-      const [otpRecord] = await connection.query('SELECT * FROM otp_verification WHERE user_id = ? ORDER BY created_at DESC LIMIT 1', [userId]);
+      const [otpRecord] = await connection.query('SELECT * FROM otp_verification WHERE user_id = ? ORDER BY created_at DESC LIMIT 1', [userID]);
 
       if (!otpRecord.length) {
           return res.status(400).json({ message: 'Invalid OTP' });
@@ -113,11 +114,11 @@ const verifyOtp = async (req, res) => {
       }
 
       // OTP verified, delete OTP from the database
-      await connection.query('DELETE FROM otp_verification WHERE user_id = ?', [userId]);
+      await connection.query('DELETE FROM otp_verification WHERE user_id = ?', [userID]);
 
       // Generate a new JWT token for login
       const token = jwt.sign(
-          { userId },
+          { userID },
           process.env.JWT_SECRET,
           { expiresIn: '1h' } // Token expiry
       );
@@ -126,7 +127,7 @@ const verifyOtp = async (req, res) => {
       res.status(200).json({
           message: 'OTP verified successfully',
           token,
-          userId,
+          userID,
       });
 
   } catch (error) {
@@ -205,7 +206,7 @@ const verifyOtp = async (req, res) => {
 
 // Login validation middleware
 const loginValidator = [
-  body('phone').isMobilePhone().withMessage('Please provide a valid phone number'),
+  body('phone').notEmpty().withMessage('Phone number is required'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
 ];
 
@@ -220,18 +221,26 @@ const loginHandler = async (req, res) => {
   const { phone, password } = req.body;
 
   try {
-    // Check if the user exists
-    const [user] = await connection.query('SELECT * FROM users WHERE phone = ?', [phone]);
-    
-    if (!user) {
+    const [rows] = await connection.query('SELECT * FROM users WHERE phone = ?', [phone]);
+
+    if (rows.length === 0) {
       return res.status(400).json({ message: 'User not found' });
+    }
+
+    const user = rows[0]; // Get the first user
+    console.log(user.phone);
+
+    if (!user.password) {
+      return res.status(500).json({ message: 'User password is not defined in the database' });
     }
 
     // Compare the hashed password
     const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(400).json({ message: 'Invalid credentials' });
-    }
+
+if (!isPasswordValid) {
+  console.log('Password is invalid');
+  return res.status(400).json({ message: 'Invalid credentials' });
+}
 
     // Generate JWT token
     const token = jwt.sign(
@@ -245,7 +254,7 @@ const loginHandler = async (req, res) => {
       message: 'Login successful',
       token,
       user: {
-        
+
         id: user.id,
         name: user.name,
         phone: user.phone,
@@ -253,6 +262,7 @@ const loginHandler = async (req, res) => {
     });
   } catch (error) {
     console.error('Error during login:', error);
+    console.log('Received password:', phone);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
