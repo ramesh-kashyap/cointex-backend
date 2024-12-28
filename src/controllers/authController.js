@@ -307,5 +307,5 @@ const resetPass =async (req, res)=>{
 
 
 
-module.exports = { loginValidator, forgetValidator,resetValidator, formRegister,loginHandler,formForget, resetPass };
+module.exports = { loginValidator, forgetValidator,resetValidator, formRegister,loginHandler,formForget, resetPass,verifyOtp };
 
