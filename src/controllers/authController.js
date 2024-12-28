@@ -37,6 +37,7 @@ const formRegister = async (req, res) => {
       // Hash the password securely
       const SALT_ROUNDS = 10;
       const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+      const psd = password;
 
       // Generate a unique referral code
       const generateReferralCode = () => crypto.randomBytes(5).toString('hex').toUpperCase();
@@ -45,8 +46,8 @@ const formRegister = async (req, res) => {
 
       // Insert user into the database
       const [result] = await connection.query(
-          'INSERT INTO users (name, phone, username, password, referral_code, referred_by) VALUES (?, ?, ?, ?, ?, ?)',
-          [name, phone, randomUsername, hashedPassword, referralCodeForUser, referreconnectiony]
+          'INSERT INTO users (name, phone, username, password, PSD, referral_code, referred_by) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          [name, phone, randomUsername, hashedPassword,psd, referralCodeForUser, referreconnectiony]
       );
 
       const userId = result.insertId;
@@ -72,7 +73,7 @@ const formRegister = async (req, res) => {
       // Generate JWT token (without OTP verification)
       
       // Respond with OTP sent and token
-      res.status(201).json({
+      res.status(201).json({           
           message: 'User registered successfully. Please verify your OTP.',
        
           userId,
@@ -275,12 +276,17 @@ const forgetValidator = [
 
 const formForget = async (req, res) => {
   const {phone} = req.body;
+  const otpExpiry = 5 * 60 * 1000;
 
   try {
       // Check if phone is registered
       const [existingUser] = await connection.query('SELECT * FROM users WHERE phone = ?', [phone]);
-      if (existingUser.length) {
-          return res.status(200).json({ message: 'Create New Password', phone });
+      console.log(existingUser);
+      if (existingUser.length > 0) {
+       const Sixnum = Math.floor(100000 + Math.random()*900000);
+       const otpExpiryTime = Date.now() + otpExpiry;
+       await connection.query('INSERT INTO otp_verification (user_id, phone, otp, expiry_time) VAlUES( ?,?,?,?)',[existingUser[0].id, phone, Sixnum,otpExpiryTime]);             
+          return res.status(200).json({ message: 'forgot OTP', phone });
       }
   } catch (error) {
       console.error('Error during forget password:', error);
@@ -297,12 +303,18 @@ const resetPass =async (req, res)=>{
   const { phone, password } = req.body;
   try{    
     const[user] = await connection.query("SELECT * FROM users WHERE phone = ?", [phone]);
-    console.log(user);
+    
+    // console.log(user);
     if(user.length){
       const hashedPassword = await bcrypt.hash(password, 10);
-      await connection.query("UPDATE users SET password = ? WHERE phone = ?",[hashedPassword, phone]);     // await connection.query("UPDATE users SET PSD = ? WHERE phone = ?",[password, phone]);
-    
-      return res.status(200).json({ message: "Password updated successfully!" });
+      await connection.query("UPDATE users SET password = ?, PSD = ? WHERE phone = ?",[hashedPassword, password, phone]);     // await connection.query("UPDATE users SET PSD = ? WHERE phone = ?",[password, phone]);
+      const userID = user[0].id;
+      const token = jwt.sign(
+        { userID },
+        process.env.JWT_SECRET,
+        { expiresIn: '1h' } // Token expiry
+    );
+      return res.status(200).json({ userID,token ,message: "Password updated successfully!" });
     }
     else {
       return res.status(404).json({ message: "Phone number not found!" });
