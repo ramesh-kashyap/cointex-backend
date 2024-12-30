@@ -20,8 +20,8 @@
     "googleapis": "^144.0.0",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.11.5",
-    "nodemon": "^3.1.9",
-    "passport": "^0.7.0"
+    "passport": "^0.7.0",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",
