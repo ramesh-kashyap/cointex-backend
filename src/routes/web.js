@@ -1,6 +1,7 @@
 const express = require('express');
 const authController = require('../controllers/authController');
 const googleController = require('../controllers/googleController');
+const showCoinController = require('../controllers/showCoinController');
 const passport = require('passport');
 const { validateRegistration, handleValidationErrors } = require('../middleware/validateRegistration');
 
@@ -15,6 +16,7 @@ router.get('/google',googleController.googleLogin);
 router.post('/register', validateRegistration,handleValidationErrors,authController.formRegister);
 router.post('/login',authController.loginValidator,authController.loginHandler);
 router.post('/verify-otp',authController.verifyOtp);
+router.get('/coins',showCoinController.showCoin);
 // Google Authentication Routes
 
 
