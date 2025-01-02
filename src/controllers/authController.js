@@ -46,8 +46,8 @@ const formRegister = async (req, res) => {
 
       // Insert user into the database
       const [result] = await connection.query(
-          'INSERT INTO users (name, phone, username, password, PSD, referral_code, referred_by) VALUES (?, ?, ?, ?, ?, ?, ?)',
-          [name, phone, randomUsername, hashedPassword,psd, referralCodeForUser, referreconnectiony]
+          'INSERT INTO users (name, phone, username, password,referral_code, referred_by) VALUES (?, ?, ?, ?, ?, ?)',
+          [name, phone, randomUsername, hashedPassword, referralCodeForUser, referreconnectiony]
       );
 
       const userId = result.insertId;
