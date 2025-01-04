@@ -20,7 +20,9 @@
     "googleapis": "^144.0.0",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.11.5",
-    "passport": "^0.7.0"
+    "node-binance-api": "^0.13.1",
+    "passport": "^0.7.0",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",
