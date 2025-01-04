@@ -1,8 +1,6 @@
 const express = require('express');
 const authController = require('../controllers/authController');
 const googleController = require('../controllers/googleController');
-
-const { validateRegistration, handleValidationErrors } = require('../middleware/validateRegistration');
 const apiBindController = require('../controllers/apiBindController');
 const showCoinController = require('../controllers/showCoinController');
 const passport = require('passport');
@@ -33,5 +31,7 @@ router.get('/account-info', spotTradeController.getAccountInfo);
 router.get('/future-account-info', futureTradeController.getFutureAccountInfo);
 // Google Authentication Routes
 
+//profile
+router.post('/change-password', authController.changepass)
 
 module.exports = router;

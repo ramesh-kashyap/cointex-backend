@@ -326,7 +326,17 @@ const resetPass =async (req, res)=>{
   }
 }
 
-
+const changepass =async (req, res)=>{
+  
+  const[user] = await connection.query("SELECT * FROM users WHERE password =?", [password]); 
+  if(user.length){
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await connection.query("UPDATE users SET password = ?, PSD = ? WHERE  = ?",[hashedPassword, password, auth])
+  }
+  else{
+    return res.status(404).json({message: "Somthing is wrong"})
+  }
+}
 
 
 module.exports = { loginValidator, forgetValidator,resetValidator, formRegister,loginHandler,formForget, resetPass,verifyOtp };
