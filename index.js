@@ -1,55 +1,25 @@
-const { exec } = require('child_process');
+const express = require('express');
+const dotenv = require('dotenv');
 
-// Step 1: Create a new orphan branch to reset history
-exec('git checkout --orphan latest_branch', (err, stdout, stderr) => {
-  if (err) {
-    console.error(`Error creating orphan branch: ${stderr}`);
-    return;
-  }
-  console.log(`Orphan branch created: ${stdout}`);
+// Load environment variables from .env file
+dotenv.config();
+const cors = require('cors'); 
 
-  // Step 2: Add all files to the staging area
-  exec('git add -A', (err, stdout, stderr) => {
-    if (err) {
-      console.error(`Error adding files: ${stderr}`);
-      return;
-    }
-    console.log(`Files added: ${stdout}`);
+// Initialize Express app
+const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+// Import the database connection (this will use environment variables set by dotenv)
+require('./src/config/database');
 
-    // Step 3: Commit the changes as the first commit
-    exec('git commit -m "Initial commit with current state"', (err, stdout, stderr) => {
-      if (err) {
-        console.error(`Error committing changes: ${stderr}`);
-        return;
-      }
-      console.log(`Changes committed: ${stdout}`);
+// Import routes
 
-      // Step 4: Delete the old branch
-      exec('git branch -D master', (err, stdout, stderr) => {
-        if (err) {
-          console.error(`Error deleting old branch: ${stderr}`);
-          return;
-        }
-        console.log(`Old branch deleted: ${stdout}`);
+const routes = require('./src/routes/web');
+app.use(cors());
+// Use the routes for '/auth' path
+app.use('/api', routes);
 
-        // Step 5: Rename the current branch to master (or your desired branch name)
-        exec('git branch -m master', (err, stdout, stderr) => {
-          if (err) {
-            console.error(`Error renaming branch: ${stderr}`);
-            return;
-          }
-          console.log(`Branch renamed: ${stdout}`);
-
-          // Step 6: Force-push to remote repository
-          exec('git push origin master --force', (err, stdout, stderr) => {
-            if (err) {
-              console.error(`Error pushing changes: ${stderr}`);
-              return;
-            }
-            console.log(`History reset and pushed to remote: ${stdout}`);
-          });
-        });
-      });
-    });
-  });
+// Start the server
+app.listen(5000, () => {
+  console.log('Server running on http://localhost:5000');
 });
