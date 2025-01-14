@@ -20,14 +20,14 @@ app.use(cors());
 app.use('/api', routes);
 
 
-// cron.schedule('*/1 * * * *', async () => {
-//   try {
-//       console.log('Running monitorPrice every minute...');
-//       await spotTradeController.monitorPrice(); // Call without req/res if refactored
-//   } catch (error) {
-//       console.error('Error running cron job:', error.message);
-//   }
-// });
+cron.schedule('*/1 * * * *', async () => {
+  try {
+      console.log('Running monitorPrice every minute...');
+      await spotTradeController.monitorPrice(); // Call without req/res if refactored
+  } catch (error) {
+      console.error('Error running cron job:', error.message);
+  }
+});
 // Start the server
 app.listen(5000, () => {
   console.log('Server running on http://localhost:5000');
