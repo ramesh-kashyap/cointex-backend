@@ -4,7 +4,7 @@ const axios = require('axios');
 const WebSocket = require('ws');
 const connection = require('../config/database'); // Database connection
 const BASE_URL = 'https://testnet.binance.vision';
-
+const { analyzeMarketTrend, fetchTopCoinsFromDatabase } = require('../controllers/marketAiBotController');
 // Helper function to create a signature
 function createSignature(queryString, apiSecret) {
     return crypto.createHmac('sha256', apiSecret).update(queryString).digest('hex');
@@ -64,73 +64,73 @@ async function getApiKeysFromDatabase(userId) {
 }
 
 // Function to place a buy order for TRX
-async function buyTRX(apiKey, apiSecret, quantity) {
-    const endpoint = '/api/v3/order';
-    const params = {
-        symbol: 'TRXUSDT',         // Symbol for TRX/USDT pair
-        side: 'BUY',               // Specify buy order
-        type: 'MARKET',            // Market order type
-        quantity: quantity,       // Quantity to buy
-    };
+// async function buyTRX(apiKey, apiSecret, quantity) {
+//     const endpoint = '/api/v3/order';
+//     const params = {
+//         symbol: 'TRXUSDT',         // Symbol for TRX/USDT pair
+//         side: 'BUY',               // Specify buy order
+//         type: 'MARKET',            // Market order type
+//         quantity: quantity,       // Quantity to buy
+//     };
 
-    try {
-        const order = await binanceRequest('POST', endpoint, params, apiKey, apiSecret);
-        console.log('Buy Order Response:', order);
-        return order;
-    } catch (error) {
-        console.error('Failed to place buy order:', error.response?.data || error.message);
-        throw error;
-    }
-}
+//     try {
+//         const order = await binanceRequest('POST', endpoint, params, apiKey, apiSecret);
+//         console.log('Buy Order Response:', order);
+//         return order;
+//     } catch (error) {
+//         console.error('Failed to place buy order:', error.response?.data || error.message);
+//         throw error;
+//     }
+// }
 
 // Real-time price tracking with WebSocket
-async function startRealTimePriceTracking(apiKey, apiSecret) {
-    const ws = new WebSocket('wss://stream.binance.com:9443/ws/trxusdt@trade');
+// async function startRealTimePriceTracking(apiKey, apiSecret) {
+//     const ws = new WebSocket('wss://stream.binance.com:9443/ws/trxusdt@trade');
 
-    ws.on('open', () => {
-        console.log('WebSocket connected for TRX/USDT');
-    });
+//     ws.on('open', () => {
+//         console.log('WebSocket connected for TRX/USDT');
+//     });
 
-    ws.on('message', async (data) => {
-        const tradeData = JSON.parse(data);
-        const tradePrice = parseFloat(tradeData.p); // Real-time market price
-        console.log('Real-time TRX price:', tradePrice);
+//     ws.on('message', async (data) => {
+//         const tradeData = JSON.parse(data);
+//         const tradePrice = parseFloat(tradeData.p); // Real-time market price
+//         console.log('Real-time TRX price:', tradePrice);
 
-        // Close WebSocket to avoid duplicate orders
-        ws.close();
+//         // Close WebSocket to avoid duplicate orders
+//         ws.close();
 
-        try {
-            // Fetch TRX/USDT trading rules
-            const trxSymbolInfo = await binanceRequest('GET', '/api/v3/exchangeInfo', {}, apiKey, apiSecret)
-                .then(info => info.symbols.find(symbol => symbol.symbol === 'TRXUSDT'));
+//         try {
+//             // Fetch TRX/USDT trading rules
+//             const trxSymbolInfo = await binanceRequest('GET', '/api/v3/exchangeInfo', {}, apiKey, apiSecret)
+//                 .then(info => info.symbols.find(symbol => symbol.symbol === 'TRXUSDT'));
 
-            const lotSizeFilter = trxSymbolInfo.filters.find(filter => filter.filterType === 'LOT_SIZE');
-            const minLotSize = parseFloat(lotSizeFilter.minQty);
-            const stepSize = parseFloat(lotSizeFilter.stepSize);
+//             const lotSizeFilter = trxSymbolInfo.filters.find(filter => filter.filterType === 'LOT_SIZE');
+//             const minLotSize = parseFloat(lotSizeFilter.minQty);
+//             const stepSize = parseFloat(lotSizeFilter.stepSize);
 
-            // Calculate quantity to buy with 5 USDT
-            let quantityToBuy = (5 / tradePrice).toFixed(8); // 5 USDT worth of TRX
-            quantityToBuy = Math.floor(quantityToBuy / stepSize) * stepSize; // Adjust to step size
+//             // Calculate quantity to buy with 5 USDT
+//             let quantityToBuy = (5 / tradePrice).toFixed(8); // 5 USDT worth of TRX
+//             quantityToBuy = Math.floor(quantityToBuy / stepSize) * stepSize; // Adjust to step size
 
-            if (quantityToBuy >= minLotSize) {
-                console.log(`Placing market buy order for ${quantityToBuy} TRX`);
-                await buyTRX(apiKey, apiSecret, quantityToBuy);
-            } else {
-                console.error(`Quantity too low to buy. Minimum required: ${minLotSize}`);
-            }
-        } catch (error) {
-            console.error('Error during buy process:', error.response?.data || error.message);
-        }
-    });
+//             if (quantityToBuy >= minLotSize) {
+//                 console.log(`Placing market buy order for ${quantityToBuy} TRX`);
+//                 await buyTRX(apiKey, apiSecret, quantityToBuy);
+//             } else {
+//                 console.error(`Quantity too low to buy. Minimum required: ${minLotSize}`);
+//             }
+//         } catch (error) {
+//             console.error('Error during buy process:', error.response?.data || error.message);
+//         }
+//     });
 
-    ws.on('error', (error) => {
-        console.error('WebSocket error:', error);
-    });
+//     ws.on('error', (error) => {
+//         console.error('WebSocket error:', error);
+//     });
 
-    ws.on('close', () => {
-        console.log('WebSocket connection closed');
-    });
-}
+//     ws.on('close', () => {
+//         console.log('WebSocket connection closed');
+//     });
+// }
 
 // Fetch account information
 async function getAccountInfo(req, res) {
@@ -157,21 +157,21 @@ async function getAccountInfo(req, res) {
 }
 
 // Start price tracking endpoint
-async function startPriceTracking(req, res) {
-    const userId = req.query.userId;
-    if (!userId) {
-        return res.status(400).json({ error: 'User ID is required' });
-    }
+// async function startPriceTracking(req, res) {
+//     const userId = req.query.userId;
+//     if (!userId) {
+//         return res.status(400).json({ error: 'User ID is required' });
+//     }
 
-    try {
-        const { apiKey, apiSecret } = await getApiKeysFromDatabase(userId);
-        await startRealTimePriceTracking(apiKey, apiSecret);
-        res.json({ message: 'Price tracking started successfully' });
-    } catch (error) {
-        console.error('Error starting price tracking:', error.message);
-        res.status(500).json({ error: 'Failed to start price tracking', details: error.message });
-    }
-}
+//     try {
+//         const { apiKey, apiSecret } = await getApiKeysFromDatabase(userId);
+//         await startRealTimePriceTracking(apiKey, apiSecret);
+//         res.json({ message: 'Price tracking started successfully' });
+//     } catch (error) {
+//         console.error('Error starting price tracking:', error.message);
+//         res.status(500).json({ error: 'Failed to start price tracking', details: error.message });
+//     }
+// }
 let orderPlaced = false; // Flag to prevent duplicate orders
 // Generic function to place a buy or sell order for TRX
 async function placeOrder(req, res, orderType) {
