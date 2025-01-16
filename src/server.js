@@ -3,13 +3,13 @@ const Sentiment = require('sentiment');
 const { TwitterApi } = require('twitter-api-v2');
 const { RSI, SMA, EMA, MACD, BollingerBands } = require('technicalindicators');
 const cron = require('node-cron');
-
+const connection = require('../src/config/database');
 // Initialize Twitter API client
 const twitterClient = new TwitterApi({
-  appKey: 'YOUR_TWITTER_API_KEY',
-  appSecret: 'YOUR_TWITTER_API_SECRET',
-  accessToken: 'YOUR_TWITTER_ACCESS_TOKEN',
-  accessSecret: 'YOUR_TWITTER_ACCESS_SECRET',
+  appKey: '4slediM5AGz602oF1xQ9e1Khx',
+  appSecret: 'jj7pmJc5aJHjs7yiCHe04AagebusOsKfltMzuz6U9NypDTSD4C',
+  accessToken: '1877270106369306624-GCGUu2saal61HMOtIppQOl4cyX1BKY',
+  accessSecret: '15LVRNeyKfaUjLaEMxpYXzwMkF5Mwt55GaZURKJkyedHh',
 });
 
 // Sentiment analyzer instance
@@ -185,10 +185,10 @@ async function tradeAutomatically() {
 }
 
 // Schedule the bot to run every 5 minutes
-cron.schedule('*/5 * * * *', () => {
-    console.log('Running trading bot...');
-    tradeAutomatically();
-});
+// cron.schedule('*/5 * * * *', () => {
+//     console.log('Running trading bot...');
+//     tradeAutomatically();
+// });
 
 // Error handling for unhandled promise rejections
 process.on('unhandledRejection', error => {
