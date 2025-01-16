@@ -3,7 +3,7 @@ const axios = require('axios');
 const { RSI, SMA, EMA, MACD, BollingerBands } = require('technicalindicators');
 const googleTrends = require('google-trends-api');
 const Sentiment = require('sentiment');
-const connection = require('../cointex-backend/src/config/database');
+const connection = require('../config/database');
 
 // Initialize sentiment analysis tool
 const sentiment = new Sentiment();
@@ -226,41 +226,41 @@ async function analyzeMarketTrend(coins) {
   return { trendData, bullishCoin, bearishCoin };
 }
 
-// Main function to run the analysis
-async function findBullishBearishAndMarketTrend() {
-  try {
-    console.log('Fetching top coins from the database...');
-    const coins = await fetchTopCoinsFromDatabase();
-    if (!coins.length) return console.log('No coins found in the database.');
+// // Main function to run the analysis
+// async function findBullishBearishAndMarketTrend() {
+//   try {
+//     console.log('Fetching top coins from the database...');
+//     const coins = await fetchTopCoinsFromDatabase();
+//     if (!coins.length) return console.log('No coins found in the database.');
 
-    console.log('Analyzing market trend and classifying coins...');
-    const { trendData, bullishCoin, bearishCoin } = await analyzeMarketTrend(coins);
+//     console.log('Analyzing market trend and classifying coins...');
+//     const { trendData, bullishCoin, bearishCoin } = await analyzeMarketTrend(coins);
 
-    console.log('--- Analysis Results ---');
-    console.log('Market Trend:', trendData.marketTrend);
-    console.log('Bullish Coins:', trendData.bullishCoins);
-    console.log('Bearish Coins:', trendData.bearishCoins);
-    console.log('Average RSI:', trendData.averageRSI.toFixed(2));
-    console.log('Average Sentiment:', trendData.averageSentiment.toFixed(2));
+//     console.log('--- Analysis Results ---');
+//     console.log('Market Trend:', trendData.marketTrend);
+//     console.log('Bullish Coins:', trendData.bullishCoins);
+//     console.log('Bearish Coins:', trendData.bearishCoins);
+//     console.log('Average RSI:', trendData.averageRSI.toFixed(2));
+//     console.log('Average Sentiment:', trendData.averageSentiment.toFixed(2));
 
-    if (bullishCoin) {
-      console.log('Most Bullish Coin:', bullishCoin.coin);
-      console.log('Bullish Indicators:', bullishCoin);
-      console.log('1-Hour Future Trend: Bullish');
-    }
+//     if (bullishCoin) {
+//       console.log('Most Bullish Coin:', bullishCoin.coin);
+//       console.log('Bullish Indicators:', bullishCoin);
+//       console.log('1-Hour Future Trend: Bullish');
+//     }
 
-    if (bearishCoin) {
-      console.log('Most Bearish Coin:', bearishCoin.coin);
-      console.log('Bearish Indicators:', bearishCoin);
-      console.log('1-Hour Future Trend: Bearish');
-    }
-  } catch (error) {
-    console.error('Error during analysis:', error.message);
-  }
-}
+//     if (bearishCoin) {
+//       console.log('Most Bearish Coin:', bearishCoin.coin);
+//       console.log('Bearish Indicators:', bearishCoin);
+//       console.log('1-Hour Future Trend: Bearish');
+//     }
+//   } catch (error) {
+//     console.error('Error during analysis:', error.message);
+//   }
+// }
 
-console.log('Running trading bot...');
-findBullishBearishAndMarketTrend();
+// console.log('Running trading bot...');
+// findBullishBearishAndMarketTrend();
 module.exports = {
   analyzeMarketTrend,
   fetchTopCoinsFromDatabase,
