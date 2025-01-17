@@ -426,4 +426,4 @@ async function monitorPrice(req , res ) {
 
 
 
-module.exports = { getAccountInfo, startPriceTracking, placeOrder, monitorPrice };
+module.exports = { getAccountInfo, placeOrder, monitorPrice };
