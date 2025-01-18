@@ -19,6 +19,19 @@ const changepass =async (req, res)=>{
     }
   }
 
+  const changename =async(req, res) =>{
+    userId=req.user.userId;
+    const {name} = req.body
+    const[user] =await connection.query("SELECT * FROM users WHERE id =?",[userId]);
+    if(user.length){
+      await connection.query("UPDATE users SET name = ? WHERE id = ?",[name, userId]);
+      res.json({ success:true});
+    }
+    else{
+      return res.status(404).json({message:"Somthing is wrong"});
+    }
+  }
+
 
   const invite = async(req, res)=>{
     userId=req.user.userId;
@@ -42,4 +55,4 @@ const changepass =async (req, res)=>{
 }
 
 
-  module.exports = {changepass, invite};
+  module.exports = {changepass, invite, changename};

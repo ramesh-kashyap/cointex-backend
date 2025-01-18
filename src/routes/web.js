@@ -47,5 +47,6 @@ router.get('/future-account-info',authenticateJWT , futureTradeController.getFut
 //profile
 router.post('/change-password',authenticateJWT , profileController.changepass);
 router.get('/invite', authenticateJWT ,profileController.invite);
+router.post('/change-name',authenticateJWT, profileController.changename);
 
 module.exports = router;
