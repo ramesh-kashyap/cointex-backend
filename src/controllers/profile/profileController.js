@@ -54,5 +54,29 @@ const changepass =async (req, res)=>{
   }
 }
 
+  const inviteCommession = async(req, res)=>{
+    userId=req.user.userId;
+    try{
+      const[user] = await connection.query("SELECT * FROM users WHERE id =?",[userId]);
+    console.log("user ID:",user);
 
-  module.exports = {changepass, invite, changename};
+    if(user.length){
+      // const referralCode = user[0].referral_code;
+      // console.log("Referral Code:", referralCode);
+      const username = user[0].username; // Extract the username from the user object
+      const[invite] = await connection.query("SELECT * FROM users WHERE referred_by=?",[username]);
+      console.log("Username:", username);
+      res.json({ success: true, invite});
+    }
+    else {
+      res.status(404).json({ success: false, message: "User not found" });
+     }
+    }
+    catch{
+      console.error("Error Fatching user:",error.messages);
+      res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+  }
+
+
+  module.exports = {changepass, invite, changename, inviteCommession};
