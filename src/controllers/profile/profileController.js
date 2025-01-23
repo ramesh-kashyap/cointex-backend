@@ -79,4 +79,57 @@ const changepass =async (req, res)=>{
   }
 
 
-  module.exports = {changepass, invite, changename, inviteCommession};
+  const multer = require("multer");
+  // const upload = multer({ dest: './public/uploads/' });
+  let storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      return cb(null, "./public/uploads/")
+    },
+    filename: function (req, file, cb) {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+       return cb(null, file.fieldname + '-' + uniqueSuffix)
+    }
+});
+  // const storage = multer.diskStorage({
+  //   destination: (req, file, cb) => {
+  //     cb(null, './public/uploads/'); 
+  //   },
+  //   filename: (req, file, cb) => {
+  //     const uniqueSuffix = Date.now() + path.extname(file.originalname); 
+  //     cb(null, uniqueSuffix);
+  //   },
+  // });
+  
+  const upload = multer({storage});
+  const uploadImage = (req, res) => {
+    res.json(req.body);
+    upload.single("image")(req, res,  (err) => {
+      console.log(req.body);
+      // if (err) {
+      //   console.error("Error during file upload:", err);
+      //   return res.status(500).json({ message: "File upload failed." });
+      // }
+  
+      // try {
+      //   if (!req.file) {
+      //     return res.status(400).json({ message: "No file uploaded." });
+      //   }  
+      //   const userId = req.user.userId;
+      //   const filePath = `./uploads/${req.file}`;
+      //   const [result] = async () => await connection.query("UPDATE users SET picture = ? WHERE id = ?",[req.file, userId]);
+      //   if (result.affectedRows === 0) {
+      //     return res.status(404).json({ message: "User not found." });
+      //   } 
+      //   res.status(200).json({ message: "File uploaded successfully.", filePath });
+      // } catch (error) {
+      //   console.error("Error during database update:", error.message);
+      //   res.status(500).json({ message: "Error uploading file." });
+      // }
+    });
+  };
+  
+
+
+
+
+  module.exports = {changepass, invite, changename, inviteCommession, uploadImage};

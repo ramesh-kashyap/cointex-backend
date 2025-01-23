@@ -21,6 +21,7 @@
     "google-trends-api": "^4.9.2",
     "googleapis": "^144.0.0",
     "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
     "mysql2": "^3.11.5",
     "node-binance-api": "^0.13.1",
     "node-cron": "^3.0.3",
