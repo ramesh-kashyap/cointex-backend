@@ -50,5 +50,6 @@ router.get('/invite', authenticateJWT ,profileController.invite);
 router.post('/change-name',authenticateJWT, profileController.changename);
 router.get('/invite-comession',authenticateJWT, profileController.inviteCommession);
 router.post('/upload',authenticateJWT, profileController.uploadImage); 
+// router.post("/upload", authenticateJWT, upload.single("image"), profileController.uploadImage);
  
 module.exports = router;
