@@ -6,16 +6,44 @@ const middlewareController = require('../../middleware/middlewareController')
 
 
 const changepass =async (req, res)=>{
-    userId=req.user.userId;
-    const {password, newpassword} = req.body
-    const[user] = await connection.query("SELECT * FROM users WHERE id =?", [userId]); 
-    if(user.length){
-      const hashedPassword = await bcrypt.hash(newpassword, 10);
-      await connection.query("UPDATE users SET password = ?, PSD = ? WHERE id = ?",[hashedPassword, newpassword, userId]);
-      res.json({ success:true});
+    
+    try{
+      const {currentPassword, newPassword,} = req.body;
+      const userId=req.user.userId;
+      if (!userId) {
+        return res.status(400).json({ success:false, message: 'User ID is required' });
+       }   
+        console.log(userId);
+      
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ success: false, message: "All fields are required." });
     }
-    else{
-      return res.status(404).json({message: "Somthing is wrong"});
+      const[user] = await connection.query("SELECT * FROM users WHERE id =?", [userId]);
+      const isMatch = await bcrypt.compare(currentPassword, user[0].password);
+
+     if (!isMatch) {
+    console.log("Incorrect password!");
+    return;
+      } 
+      if(user.length){
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        console.log('check',hashedPassword);
+       const isUpdate= await connection.query("UPDATE users SET password = ?, PSD = ? WHERE id = ?",[hashedPassword, newPassword, userId]);
+        console.log('check',isUpdate);
+         if (isUpdate[0].affectedRows === 0) {
+            console.log("No rows updated. Check if user ID exists.");
+            return false;
+        }
+        res.json({ success:true,
+          message:"Password Updated"});
+          
+      }
+      else{
+        return res.status(404).json({message: "Somthing is wrong"});
+      }
+    }
+    catch(error){
+         console.log('Error:',error);
     }
   }
 
@@ -25,7 +53,8 @@ const changepass =async (req, res)=>{
     const[user] =await connection.query("SELECT * FROM users WHERE id =?",[userId]);
     if(user.length){
       await connection.query("UPDATE users SET name = ? WHERE id = ?",[name, userId]);
-      res.json({ success:true});
+      res.json({ success:true
+      });
     }
     else{
       return res.status(404).json({message:"Somthing is wrong"});

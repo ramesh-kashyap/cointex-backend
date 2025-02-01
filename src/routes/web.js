@@ -31,12 +31,13 @@ res.send('hello');
 
 //Auth
 
-router.post('/forget', authController.forgetValidator, authController.formForget)
-router.post('/reset', authController.resetValidator, authController.resetPass)
+// router.post('/forget', authController.forgetValidator, authController.formForget)
+// router.post('/reset', authController.resetValidator, authController.resetPass)
 router.get('/google',googleController.googleLogin);
 router.post('/register', validateRegistration,handleValidationErrors,authController.formRegister);
 router.post('/login',authController.loginValidator,authController.loginHandler);
 router.post('/verify-otp',authController.verifyOtp);
+router.post('/otp-send',authController.sendOtp);
 
 router.get('/coins',showCoinController.showCoin);
 router.post('/apiBind',authenticateJWT ,apiBindController.apiBind);
