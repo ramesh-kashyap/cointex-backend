@@ -186,7 +186,7 @@ async function analyzeMarketTrend(coins) {
     // Analyze volume and price action
     const volumeAnalysis = analyzeVolume(pricesData, indicators.volume); // Volume analysis now includes the threshold
     const priceActionAnalysis = analyzePriceAction(pricesData);
-    console.log
+    console.log(`Analyzing Coin: ${coin}`);
 
     if (indicators && pricesData.length > 0) {
       const { rsi, ema, sma, lastPrice, bollingerBands, macd, volume } = indicators;
@@ -197,25 +197,33 @@ async function analyzeMarketTrend(coins) {
 
       const futureTrend = predictFutureTrend(pricesData, indicators);
 
-      // Check bullish/bearish conditions based on all indicators
-      if (futureTrend === 'Bullish' || volumeAnalysis.isBullish || priceActionAnalysis.isBullish) {
+      // Combine sentiment with other analysis for bullish/bearish decisions
+      const isBullish = futureTrend === 'Bullish' || volumeAnalysis.isBullish || priceActionAnalysis.isBullish || sentimentScore > 0;
+      const isBearish = futureTrend === 'Bearish' || volumeAnalysis.isBearish || priceActionAnalysis.isBearish || sentimentScore < 0;
+
+      // Adjust bullish/bearish counts based on sentiment and indicators
+      if (isBullish) {
         trendData.bullishCoins++;
-      } else if (futureTrend === 'Bearish' || volumeAnalysis.isBearish || priceActionAnalysis.isBearish) {
+      } else if (isBearish) {
         trendData.bearishCoins++;
       }
 
-      if (!bullishCoin || rsi < bullishCoin.rsi) {
+      // Keep track of the best bullish/bearish coins based on combined analysis
+      if (!bullishCoin || (rsi < bullishCoin.rsi && sentimentScore > bullishCoin.sentimentScore)) {
         bullishCoin = { coin, rsi, sentimentScore, futureTrend, volumeAnalysis, priceActionAnalysis };
       }
-      if (!bearishCoin || rsi > bearishCoin.rsi) {
+
+      if (!bearishCoin || (rsi > bearishCoin.rsi && sentimentScore < bearishCoin.sentimentScore)) {
         bearishCoin = { coin, rsi, sentimentScore, futureTrend, volumeAnalysis, priceActionAnalysis };
       }
     }
   }
 
+  // Calculate average RSI and sentiment
   trendData.averageRSI = rsiValues.reduce((acc, val) => acc + val, 0) / rsiValues.length;
   trendData.averageSentiment = sentimentValues.reduce((acc, val) => acc + val, 0) / sentimentValues.length;
 
+  // Determine the overall market trend based on bullish and bearish counts
   trendData.marketTrend =
     trendData.bullishCoins > trendData.bearishCoins
       ? 'Bullish'

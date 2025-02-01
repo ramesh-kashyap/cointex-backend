@@ -20,11 +20,11 @@ router.get('/ok', (req, res) => {
         res.status(500).send('Internal Server Error');
     }
 });
-router.get('/google',googleController.googleLogin);
+router.get('/auth/google',googleController.googleLogin);
 router.post('/register', validateRegistration,handleValidationErrors,authController.formRegister);
 router.post('/login',authController.loginValidator,authController.loginHandler);
 router.post('/verify-otp',authController.verifyOtp);
-
+router.post('/otp-send',authController.sendOtp);
 router.get('/coins',showCoinController.showCoin);
 router.post('/apiBind',middlewareController,apiBindController.apiBind);
 router.get('/account-info', middlewareController,spotTradeController.getAccountInfo);

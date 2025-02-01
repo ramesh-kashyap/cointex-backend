@@ -14,8 +14,8 @@ const otpExpiry = 5 * 60 * 1000;
 
 
 const formRegister = async (req, res) => {
-  const { name, phone, password, referralCode } = req.body;
-
+  const { name, phone, password } = req.body;
+    console.log(phone, password);
   try {
       // Check if phone is already registered
       const [existingUser] = await connection.query('SELECT * FROM users WHERE phone = ?', [phone]);
@@ -25,50 +25,33 @@ const formRegister = async (req, res) => {
 
       // Validate referral code (if provided)
       let referreconnectiony = null;
-      if (referralCode) {
-          const [referrer] = await connection.query('SELECT * FROM users WHERE referral_code = ?', [referralCode]);
-          if (!referrer.length) {
-              return res.status(400).json({ message: 'Invalid referral code' });
-          }
+      // if (referralCode) {
+      //     const [referrer] = await connection.query('SELECT * FROM users WHERE referral_code = ?', [referralCode]);
+      //     if (!referrer.length) {
+      //         return res.status(400).json({ message: 'Invalid referral code' });
+      //     }
 
-          referreconnectiony = referrer[0].username;
-      }
+      //     referreconnectiony = referrer[0].username;
+      // }
 
       // Hash the password securely
       const SALT_ROUNDS = 10;
       const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
       // Generate a unique referral code
-      const generateReferralCode = () => crypto.randomBytes(5).toString('hex').toUpperCase();
-      const referralCodeForUser = generateReferralCode();
+      // const generateReferralCode = () => crypto.randomBytes(5).toString('hex').toUpperCase();
+      // const referralCodeForUser = generateReferralCode();
       const randomUsername = Math.floor(Math.random() * 1000000);
 
       // Insert user into the database
       const [result] = await connection.query(
-          'INSERT INTO users (name, phone, username, password, referral_code, referred_by) VALUES (?, ?, ?, ?, ?, ?)',
-          [name, phone, randomUsername, hashedPassword, referralCodeForUser, referreconnectiony]
+          'INSERT INTO users (name, phone, username, password ) VALUES (?, ?, ?, ?)',
+          [name, phone, randomUsername, hashedPassword]
       );
 
       const userId = result.insertId;
 
-      // Generate OTP
-      const otp = Math.floor(100000 + Math.random() * 900000); // Generate a 6-digit OTP
-
-      // Store OTP in the database or memory with expiry time
-      const otpExpiryTime = Date.now() + otpExpiry;
-      await connection.query(
-          'INSERT INTO otp_verification (user_id, otp, expiry_time) VALUES (?, ?, ?)',
-          [userId, otp, otpExpiryTime]
-      );
-
-      // Send OTP via SMS (Twilio or any SMS service)
-      // const client = twilio(process.env.TWILIO_SID, process.env.TWILIO_AUTH_TOKEN);
-      // await client.messages.create({
-      //     body: `Your OTP code is: ${otp}`,
-      //     from: process.env.TWILIO_PHONE_NUMBER,
-      //     to: phone,
-      // });
-
+      
       // Generate JWT token (without OTP verification)
       
       // Respond with OTP sent and token
@@ -84,25 +67,65 @@ const formRegister = async (req, res) => {
   }
 };
 
+
+const sendOtp = async (req, res) => {
+      try{
+
+        const { phone } = req.body;
+           // Generate OTP
+           const user = await connection.query('SELECT id FROM users WHERE phone = ?', [phone]);
+
+           if (user.length === 0) {
+             // User does not exist, return an error or create the user
+             throw new Error('User does not exist');
+           }
+      const otp = Math.floor(100000 + Math.random() * 900000); // Generate a 6-digit OTP
+
+      // Store OTP in the database or memory with expiry time
+      const otpExpiryTime = Date.now() + otpExpiry;
+      console.log('phone:',phone);
+      await connection.query(
+          'INSERT INTO otp_verification (phone, otp, expiry_time) VALUES (?, ?, ?)',
+          [phone, otp, otpExpiryTime]
+      );
+
+      // Send OTP via SMS (Twilio or any SMS service)
+      // const client = twilio(process.env.TWILIO_SID, process.env.TWILIO_AUTH_TOKEN);
+      // await client.messages.create({
+      //     body: `Your OTP code is: ${otp}`,
+      //     from: process.env.TWILIO_PHONE_NUMBER,
+      //     to: phone,
+      // });
+      res.status(201).json({
+        success: true,
+        message: 'OTP Send Successfully',
+    
+    });
+
+      }catch(error){
+        console.error('Error during registration:', error);
+        res.status(500).json({ message: 'Internal server error' });
+      }
+}
 const verifyOtp = async (req, res) => {
   const { phone, otp } = req.body;
-
+ console.log(phone);
   try {
-
-    const [rows] = await connection.query('SELECT * FROM users WHERE phone = ?', [phone]);
-    const user = rows[0]; // Get the first user
-    const userID = user.id; 
-    console.log('hello',userID);
+   
+    // const [rows] = await connection.query('SELECT * FROM users WHERE phone = ?', [phone]);
+    // const user = rows[0]; // Get the first user
+    // const userID = user.id; 
+    // console.log('hello',userID);
 
       // Fetch OTP from the database
-      const [otpRecord] = await connection.query('SELECT * FROM otp_verification WHERE user_id = ? ORDER BY created_at DESC LIMIT 1', [userID]);
-
+      const [otpRecord] = await connection.query('SELECT * FROM otp_verification WHERE phone = ? ORDER BY created_at DESC LIMIT 1', [phone]);
+      console.log(otpRecord);
       if (!otpRecord.length) {
           return res.status(400).json({ message: 'Invalid OTP' });
       }
 
       const { otp: storedOtp, expiry_time } = otpRecord[0];
-
+      console.log('check:',otpRecord[0]);
       // Check if OTP is expired
       if (Date.now() > expiry_time) {
           return res.status(400).json({ message: 'OTP expired' });
@@ -114,24 +137,21 @@ const verifyOtp = async (req, res) => {
       }
 
       // OTP verified, delete OTP from the database
-      await connection.query('DELETE FROM otp_verification WHERE user_id = ?', [userID]);
+      await connection.query('DELETE FROM otp_verification WHERE phone = ?', [phone]);
 
       // Generate a new JWT token for login
-      const token = jwt.sign(
-          { userID },
-          process.env.JWT_SECRET,
-          { expiresIn: '1h' } // Token expiry
-      );
+   
 
       // Respond with token and redirect to the dashboard (or any other appropriate location)
       res.status(200).json({
+        success: true,
           message: 'OTP verified successfully',
-          token,
-          userID,
       });
 
   } catch (error) {
+    console.log('check:');
       console.error('Error during OTP verification:', error);
+      console.log('Error during OTP verification:', error);
       res.status(500).json({ message: 'Internal server error' });
   }
 };
@@ -239,7 +259,7 @@ const loginHandler = async (req, res) => {
 
 if (!isPasswordValid) {
   console.log('Password is invalid');
-  return res.status(400).json({ message: 'Invalid credentials' });
+  return res.status(400).json({ success:false,message: 'Invalid credentials' });
 }
 
     // Generate JWT token
@@ -251,6 +271,7 @@ if (!isPasswordValid) {
 
     // Send response with token
     res.status(200).json({
+      success:true,
       message: 'Login successful',
       token,
       user: {
@@ -267,5 +288,5 @@ if (!isPasswordValid) {
   }
 };
 
-module.exports = { loginValidator, formRegister,loginHandler, verifyOtp };
+module.exports = { loginValidator, formRegister,loginHandler, verifyOtp,sendOtp };
 

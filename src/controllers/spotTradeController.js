@@ -174,148 +174,257 @@ async function getAccountInfo(req, res) {
 // }
 let orderPlaced = false; // Flag to prevent duplicate orders
 // Generic function to place a buy or sell order for TRX
+// async function placeOrder(req, res, orderType) {
+//     const userId = 4;
+//     if (!userId) {
+//         return res.status(400).json({ error: 'User ID is required' });
+//     }
+   
+//     try {
+//         const { apiKey, apiSecret } = await getApiKeysFromDatabase(userId);
+//         const client = new Spot(apiKey, apiSecret, { baseURL: 'https://testnet.binance.vision' });
+
+//         const coins = await fetchTopCoinsFromDatabase();
+//         if (!coins.length) return console.log('No coins found in the database.');
+//         console.log('Analyzing market trend and classifying coins...');
+//         const { trendData, bullishCoin, bearishCoin } = await analyzeMarketTrend(coins);
+
+//         // const symbol = 'TRXUSDT';
+//         const symbol =bullishCoin.coin.toUpperCase() +"USDT";
+//         console.log('Symbol:', symbol);
+      
+//         let currentPrice = null;
+      
+    
+//         const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@trade`);
+
+//         const pricePromise = new Promise((resolve, reject) => {
+//             const timeout = setTimeout(() => {
+//                 if (!orderPlaced) {
+//                     ws.close(); // Close WebSocket on timeout
+//                     reject(new Error('Timeout: Failed to fetch real-time price'));
+//                 }
+//             }, 10000); // Timeout after 10 seconds
+
+//             ws.on('message', (data) => {
+//                 if (orderPlaced) return; // Stop further processing if already placed
+
+//                 try {
+//                     const tradeData = JSON.parse(data);
+//                     currentPrice = parseFloat(tradeData.p);
+
+//                     if (!isNaN(currentPrice)) {
+//                         console.log('Current Price:', currentPrice);
+//                         // orderPlaced = true; // Mark as placed
+//                         ws.close(); // Close WebSocket
+//                         clearTimeout(timeout); // Clear the timeout
+//                         resolve(currentPrice);
+//                     }
+//                 } catch (error) {
+//                     console.error('Error parsing WebSocket data:', error);
+//                 }
+//             });
+
+//             ws.on('error', (error) => {
+//                 console.error('WebSocket error:', error);
+//                 clearTimeout(timeout); // Clear the timeout
+//                 reject(error);
+//             });
+
+//             ws.on('close', () => {
+//                 console.log('WebSocket connection closed');
+//             });
+//         });
+
+//         currentPrice = await pricePromise;
+//         console.log(currentPrice);
+//         const trxSymbolInfo = await client.exchangeInfo();
+//         const symbolInfo = trxSymbolInfo.data.symbols.find((s) => s.symbol === symbol);
+
+//         if (!symbolInfo) {
+//             console.error(`Symbol ${symbol} not found`);
+//             return res.status(500).json({ error: `Symbol ${symbol} not found` });
+//         }
+
+//         const lotSizeFilter = symbolInfo.filters.find((filter) => filter.filterType === 'LOT_SIZE');
+//         const stepSize = parseFloat(lotSizeFilter.stepSize);
+//         const minLotSize = parseFloat(lotSizeFilter.minQty);
+
+//         let quantityToOrder = (6 / currentPrice).toFixed(8);
+//         quantityToOrder = Math.floor(quantityToOrder / stepSize) * stepSize;
+
+//         if (quantityToOrder < minLotSize) {
+//             return res.status(400).json({ error: `Quantity too low. Minimum required: ${minLotSize}` });
+//         }
+
+//         console.log(`Placing ${orderType} order for ${quantityToOrder} TRX at ${currentPrice} USDT`);
+
+//         const orderParams = {
+//             price: currentPrice,
+//             quantity: quantityToOrder.toFixed(2),
+//             timeInForce: 'GTC',
+//             recvWindow: 10000,
+//         };        
+//         console.log('check order:',orderParams);
+//         orderSymbol=symbol;
+//         const orderResponse = await client.newOrder(symbol, orderType.toUpperCase(), 'LIMIT', orderParams);
+//         console.log('Order placed successfully:', orderResponse.data);
+//         // orderPlaced = true;
+//         const orderData = orderResponse.data;
+//         const { 
+//             orderId,
+//             orderListId,
+//             clientOrderId,
+//             transactTime,
+//             price,
+//             origQty,
+//             status,
+//             timeInForce,
+//             type,
+//             side
+//         } = orderData;
+//         const Symbol = symbol;
+//         const values = [
+//             Symbol,          // Use the already defined `symbol`
+//             orderId,
+//             orderListId,
+//             clientOrderId,
+//             transactTime,
+//             price,
+//             origQty,
+//             status,
+//             timeInForce,
+//             type,
+//             side
+//         ];
+//         const insertQuery = `
+//         INSERT INTO orders (
+//              symbol,
+//             order_id,
+//             order_list_id,
+//             client_order_id,
+//             transact_time,
+//             price,
+//             orig_qty,
+//             status,
+//             time_in_force,
+//             order_type,
+//             side
+//         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+//     `;
+
+//     const [results] = await connection.execute(insertQuery, values);
+
+//     console.log('Order saved to database:', results);
+//     } catch (error) {
+//         console.error(`Error placing ${orderType} order:`, error.message);
+//         return res.status(500).json({ error: `Failed to place ${orderType} order`, details: error.message });
+//     }
+// }
+
 async function placeOrder(req, res, orderType) {
-    const userId = 4;
+    const userId = 4; // Example user ID
     if (!userId) {
         return res.status(400).json({ error: 'User ID is required' });
     }
-   
+
     try {
         const { apiKey, apiSecret } = await getApiKeysFromDatabase(userId);
         const client = new Spot(apiKey, apiSecret, { baseURL: 'https://testnet.binance.vision' });
 
-        const symbol = 'TRXUSDT';
-        console.log('Symbol:', symbol);
+        const coins = await fetchTopCoinsFromDatabase();
+        if (!coins.length) {
+            console.log('No coins found in the database.');
+            return res.status(400).json({ error: 'No coins available for trading.' });
+        }
 
-        let currentPrice = null;
-      
-    
-        const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@trade`);
+        console.log('Analyzing market trends...');
+        const { bullishCoin } = await analyzeMarketTrend(coins);
 
-        const pricePromise = new Promise((resolve, reject) => {
-            const timeout = setTimeout(() => {
-                if (!orderPlaced) {
-                    ws.close(); // Close WebSocket on timeout
-                    reject(new Error('Timeout: Failed to fetch real-time price'));
-                }
-            }, 10000); // Timeout after 10 seconds
+        const symbol = `${bullishCoin.coin.toUpperCase()}USDT`;
+        console.log('Selected Symbol:', symbol);
 
-            ws.on('message', (data) => {
-                if (orderPlaced) return; // Stop further processing if already placed
-
-                try {
-                    const tradeData = JSON.parse(data);
-                    currentPrice = parseFloat(tradeData.p);
-
-                    if (!isNaN(currentPrice)) {
-                        console.log('Current Price:', currentPrice);
-                        // orderPlaced = true; // Mark as placed
-                        ws.close(); // Close WebSocket
-                        clearTimeout(timeout); // Clear the timeout
-                        resolve(currentPrice);
-                    }
-                } catch (error) {
-                    console.error('Error parsing WebSocket data:', error);
-                }
-            });
-
-            ws.on('error', (error) => {
-                console.error('WebSocket error:', error);
-                clearTimeout(timeout); // Clear the timeout
-                reject(error);
-            });
-
-            ws.on('close', () => {
-                console.log('WebSocket connection closed');
-            });
-        });
-
-        currentPrice = await pricePromise;
-        console.log(currentPrice);
-        const trxSymbolInfo = await client.exchangeInfo();
-        const symbolInfo = trxSymbolInfo.data.symbols.find((s) => s.symbol === symbol);
+        const exchangeInfo = await client.exchangeInfo();
+        const symbolInfo = exchangeInfo.data.symbols.find((s) => s.symbol === symbol);
 
         if (!symbolInfo) {
             console.error(`Symbol ${symbol} not found`);
             return res.status(500).json({ error: `Symbol ${symbol} not found` });
         }
 
-        const lotSizeFilter = symbolInfo.filters.find((filter) => filter.filterType === 'LOT_SIZE');
+        const priceResponse = await client.tickerPrice(symbol);
+        const currentPrice = parseFloat(priceResponse.data.price);
+
+        const lotSizeFilter = symbolInfo.filters.find((f) => f.filterType === 'LOT_SIZE');
         const stepSize = parseFloat(lotSizeFilter.stepSize);
         const minLotSize = parseFloat(lotSizeFilter.minQty);
 
-        let quantityToOrder = (6 / currentPrice).toFixed(8);
-        quantityToOrder = Math.floor(quantityToOrder / stepSize) * stepSize;
+        let quantityToOrder = Math.floor((6 / currentPrice) / stepSize) * stepSize;
+        quantityToOrder = parseFloat(quantityToOrder.toFixed(8));
 
         if (quantityToOrder < minLotSize) {
             return res.status(400).json({ error: `Quantity too low. Minimum required: ${minLotSize}` });
         }
 
-        console.log(`Placing ${orderType} order for ${quantityToOrder} TRX at ${currentPrice} USDT`);
+        console.log(`Placing ${orderType} Market Order for ${quantityToOrder} ${symbol}`);
 
         const orderParams = {
-            price: currentPrice,
-            quantity: quantityToOrder.toFixed(2),
-            timeInForce: 'GTC',
+            symbol,
+            side: orderType.toUpperCase(),
+            type: 'MARKET',
+            quantity: quantityToOrder,
             recvWindow: 10000,
-        };        
-        console.log('check o:',orderParams);
-        orderSymbol=symbol;
-        const orderResponse = await client.newOrder(symbol, orderType.toUpperCase(), 'LIMIT', orderParams);
-        console.log('Order placed successfully:', orderResponse.data);
-        // orderPlaced = true;
-        const orderData = orderResponse.data;
-        const { 
-            orderId,
-            orderListId,
-            clientOrderId,
-            transactTime,
-            price,
-            origQty,
-            status,
-            timeInForce,
-            type,
-            side
-        } = orderData;
-        const Symbol = 'TRXUSDT';
-        const values = [
-            Symbol,          // Use the already defined `symbol`
-            orderId,
-            orderListId,
-            clientOrderId,
-            transactTime,
-            price,
-            origQty,
-            status,
-            timeInForce,
-            type,
-            side
-        ];
+        };
+
+        const orderResponse = await client.newOrder(orderParams);
+
+        if (!orderResponse || !orderResponse.data) {
+            throw new Error('Invalid response from Binance API. Order not created.');
+        }
+
+        console.log('Market Order placed successfully:', orderResponse.data);
+
+        const { orderId, clientOrderId, transactTime, origQty, status, side } = orderResponse.data;
+
         const insertQuery = `
-        INSERT INTO orders (
-             symbol,
-            order_id,
-            order_list_id,
-            client_order_id,
-            transact_time,
-            price,
-            orig_qty,
+            INSERT INTO orders (
+                symbol,
+                order_id,
+                order_list_id,
+                client_order_id,
+                transact_time,
+                price,
+                orig_qty,
+                status,
+                time_in_force,
+                order_type,
+                side
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        `;
+
+        const values = [
+            symbol,
+            orderId,
+            null, // order_list_id for market orders
+            clientOrderId,
+            transactTime,
+            null, // price for market orders
+            origQty,
             status,
-            time_in_force,
-            order_type,
-            side
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-    `;
+            'N/A', // time_in_force not applicable for market orders
+            'MARKET',
+            side,
+        ];
 
-    const [results] = await connection.execute(insertQuery, values);
+        const [results] = await connection.execute(insertQuery, values);
+        console.log('Order saved to database successfully:', results);
 
-    console.log('Order saved to database:', results);
+        res.status(200).json({ message: 'Market order placed and saved successfully.', orderId });
     } catch (error) {
         console.error(`Error placing ${orderType} order:`, error.message);
-        return res.status(500).json({ error: `Failed to place ${orderType} order`, details: error.message });
+        res.status(500).json({ error: `Failed to place ${orderType} order`, details: error.message });
     }
 }
-
 
 
 async function monitorPrice(req , res ) {
@@ -329,16 +438,31 @@ async function monitorPrice(req , res ) {
             console.log(message);
             return;
         }
+        const coins = await fetchTopCoinsFromDatabase();
+        if (!coins.length) return console.log('No coins found in the database.');
+        console.log('Analyzing market trend and classifying coins...');
+        const { trendData, bullishCoin, bearishCoin } = await analyzeMarketTrend(coins);
 
+        // if (!bullishCoin || trendData.marketTrend !== "Bullish" || bullishCoin.rsi < 30 || bullishCoin.rsi > 70) {
+        //     console.log('No suitable bullish coin found or RSI is out of range (30 - 70).');
+        //     console.log("coin:",bullishCoin.rsi);
+        //     console.log("coin:",bullishCoin);
+        //     if (res) return res.status(200).json({ message: 'No suitable buying opportunity found.' });
+        //     return;
+        // }
+        // const symbol = 'TRXUSDT';
+        const symbol =bullishCoin.coin.toUpperCase() +"USDT";
+        console.log(bullishCoin);
         const [orders] = await connection.query(
-                 'SELECT * FROM orders WHERE userId = ? AND side = ? AND tradeStatus = ? ORDER BY transact_time DESC LIMIT 1',
-            [userId, 'BUY', 'active']
+                 'SELECT * FROM orders WHERE userId = ? AND side = ? AND tradeStatus = ? AND symbol = ? ORDER BY transact_time DESC LIMIT 1',
+            [userId, 'BUY', 'active',symbol]
         );
 
         if (orders.length === 0) {
             const message = 'No orders found for this user';
             if (res) return res.status(404).json({ message });
             console.log(message);
+            await placeOrder(req, res, 'buy');
             return;
         }
 
@@ -348,7 +472,7 @@ async function monitorPrice(req , res ) {
         const orderId = orders[0].id;
         if (res) res.json({ orders }); // Optional early response for debugging
 
-        const symbol = 'TRXUSDT';
+       
         let currentPrice = null;
 
         const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@trade`);
@@ -388,7 +512,7 @@ async function monitorPrice(req , res ) {
         console.log('Current USDT:', currentUSDT);
         console.log('Price Change Percentage:', priceChangePercentage);
 
-        if (priceChangePercentage >= 0.1) {
+        if (priceChangePercentage >= 0.5) {
             console.log(`Price increased by ${priceChangePercentage.toFixed(2)}%. Triggering sell order.`);
             await placeOrder(req, res, 'sell');
 
@@ -426,4 +550,4 @@ async function monitorPrice(req , res ) {
 
 
 
-module.exports = { getAccountInfo, startPriceTracking, placeOrder, monitorPrice };
+module.exports = { getAccountInfo,  placeOrder, monitorPrice };
