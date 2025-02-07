@@ -7,61 +7,99 @@ const middlewareController = require('../../middleware/middlewareController')
 
 const changepass =async (req, res)=>{
     
-    try{
-      const {currentPassword, newPassword,} = req.body;
-      const userId=req.user.userId;
+    try {
+      const {currentPassword, newPassword, confirmPassword} = req.body;
+      const userId = req.user.userId;
       if (!userId) {
-        return res.status(400).json({ success:false, message: 'User ID is required' });
-       }   
-        console.log(userId);
-      
-      if (!currentPassword || !newPassword) {
-        return res.status(400).json({ success: false, message: "All fields are required." });
-    }
-      const[user] = await connection.query("SELECT * FROM users WHERE id =?", [userId]);
+        return res.status(400).json({
+          success: false,
+          message: 'User ID is required'
+        });
+      }
+      console.log(userId);
+      if (!currentPassword && !newPassword && !confirmPassword) {
+        return res.status(400).json({
+          success: false,
+          message: "All fields are required."
+        });
+      }
+      const [user] = await connection.query("SELECT * FROM users WHERE id =?", [userId]);
+      if (!user.length) {
+        return res.status(404).json({ success: false, message: "User not found" });
+      }
       const isMatch = await bcrypt.compare(currentPassword, user[0].password);
 
-     if (!isMatch) {
-    console.log("Incorrect password!");
-    return;
-      } 
-      if(user.length){
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
-        console.log('check',hashedPassword);
-       const isUpdate= await connection.query("UPDATE users SET password = ?, PSD = ? WHERE id = ?",[hashedPassword, newPassword, userId]);
-        console.log('check',isUpdate);
-         if (isUpdate[0].affectedRows === 0) {
-            console.log("No rows updated. Check if user ID exists.");
-            return false;
-        }
-        res.json({ success:true,
-          message:"Password Updated"});
-          
+      if (!isMatch) {
+        console.log("Incorrect password!");
+        return res.status(400).json({
+          success: false,
+          message: "Current password is Incorrect."
+        });
       }
-      else{
-        return res.status(404).json({message: "Somthing is wrong"});
+      if (user.length) {
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        console.log('check', hashedPassword);
+        const isUpdate = await connection.query("UPDATE users SET password = ?, PSD = ? WHERE id = ?", [hashedPassword, newPassword, userId]);
+        console.log('check', isUpdate);
+        if (isUpdate[0].affectedRows === 0) {
+          console.log("No rows updated. Check if user ID exists.");
+          return false;
+        }
+        res.json({
+          success: true,
+          message: "Password Updated"
+        });
+      } else {
+        return res.status(404).json({
+          message: "Somthing is wrong"
+        });
       }
     }
     catch(error){
-         console.log('Error:',error);
+      return res.status(500).json({ success: false, message: "Internal server error" });
     }
   }
 
-  const changename =async(req, res) =>{
-    userId=req.user.userId;
-    const {name} = req.body
-    const[user] =await connection.query("SELECT * FROM users WHERE id =?",[userId]);
-    if(user.length){
-      await connection.query("UPDATE users SET name = ? WHERE id = ?",[name, userId]);
-      res.json({ success:true
-      });
+  const changename = async (req, res) => {
+    try {
+        const userId = req.user.userId; // Ensure userId is coming from authentication middleware
+        const { name } = req.body;
+        if (!name || name.trim() === "") {
+            return res.status(400).json({ success: false, message: "Username cannot be empty." });
+        }
+        // Fetch the user
+        const [user] = await connection.query("SELECT * FROM users WHERE id = ?", [userId]);
+        if (!user.length) {
+            return res.status(404).json({ success: false, message: "User not found." });
+        }
+        // Update the username
+        await connection.query("UPDATE users SET name = ? WHERE id = ?", [name, userId]);
+        res.json({ success: true, message: "Username updated successfully." });
+
+    } catch (error) {
+        console.error("Error updating username:", error);
+        res.status(500).json({ success: false, message: "Internal server error." });
     }
-    else{
-      return res.status(404).json({message:"Somthing is wrong"});
-    }
+};
+
+const getinfo = async (req, res) => {  
+  try {
+    const userId = req.user.userId;
+      if (!userId) {
+          return res.status(401).json({success: false, message: "Unauthorized! user is unauthorized" });
+      }      
+      const query =  await connection.query("SELECT * FROM users WHERE id = ?", [userId]);    
+
+      if (query.length > 0) {
+          return res.json({ username: query[0]});
+      } else {
+          return res.status(404).json({success: false, message: 'User not found' });
+      }
+  } catch (err) {
+      console.error('Database error:', err.message || err);
+      return res.status(500).json({success: false, message: 'Internal server error' });
   }
-
-
+};
   const invite = async(req, res)=>{
     userId=req.user.userId;
     try{
@@ -82,7 +120,6 @@ const changepass =async (req, res)=>{
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 }
-
   const inviteCommession = async(req, res)=>{
     userId=req.user.userId;
     try{
@@ -206,7 +243,64 @@ const uploadImage = async (req, res) => {
   });
 };
 
+   const changemail = async (req, res) =>{
+    userId = req.user.userId;
+    try{
+       const {changeMail} = req.body;
+       const [user] = await connection.query("SELECT * FROM users WHERE id =?",[userId]);
+       if (!user.length) {
+        return res.status(404).json({ success: false, message: "User Not Found" });
+    }
+       const [update] = await connection.query("UPDATE users SET email = ? WHERE id = ?", [changeMail, userId]);
+       if (update.affectedRows === 0) {
+      return res.status(400).json({ success: false, message: "Email update failed" });
+    }
+         res.json({ success: true, message: "Email Updated" });
+    }
+    catch(error){
+      return res.status(500).json({ success: false, message: "Internal server error" });
+    }
+   }
+   const changephone = async (req, res) =>{
+    userId = req.user.userId;
+    const {changePhone} = req.body;
+    try{
+      const [user] = await connection.query("SELECT * FROM users WHERE id =?",[userId]);
+      if(!user){
+        return res.status(400).json({success: false, message:"User Not Found!"});
+      }
+       const [phoneUp] = await connection.query('UPDATE users SET phone = ? WHERE id = ?',[changePhone, userId]);
+       if(phoneUp.affectedRows === 0){
+        return res.stauts(400).json({success: false, message:"Phone Number Not Updated!"})
+       }
+       else{
+        console.log(phoneUp);
+        return res.json({success:true, message: "Phone Number Update Successfully."})
+       }
+    }
+    catch(error){
+        return res.status(500).json({success: false, message:"Internal Server Error"});
+    }
+   }
+
+   const reffrail = async (req ,res) =>{
+    try {
+      const userId = req.user.userId;
+        if (!userId) {
+            return res.status(401).json({success: false, message: "Unauthorized! user is unauthorized" });
+        }      
+        const query =  await connection.query("SELECT * FROM users WHERE id = ?", [userId]);    
+  
+        if (query.length > 0) {
+            return res.json({ username: query[0]});
+        } else {
+            return res.status(404).json({success: false, message: 'User not found' });
+        }
+    } catch (err) {
+        console.error('Database error:', err.message || err);
+        return res.status(500).json({success: false, message: 'Internal server error' });
+    }
+   }
 
 
-
-  module.exports = {changepass, invite, changename, inviteCommession, uploadImage};
+  module.exports = {changepass, invite, changename, inviteCommession, uploadImage, changemail, changephone, getinfo, reffrail};

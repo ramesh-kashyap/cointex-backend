@@ -5,6 +5,9 @@ const apiBindController = require('../controllers/apiBindController');
 const showCoinController = require('../controllers/showCoinController');
 const passport = require('passport');
 const { validateRegistration, handleValidationErrors } = require('../middleware/validateRegistration');
+const { validateChangePassword } = require('../middleware/validateProfile');
+const {validateEmail} = require('../middleware/validateProfile');
+const {validatePhone} = require('../middleware/validateProfile')
 const  spotTradeController  = require('../controllers/spotTradeController');
 const  futureTradeController  = require('../controllers/futureTradeController');
 const  profileController  = require('../controllers/profile/profileController');
@@ -46,9 +49,13 @@ router.get('/future-account-info',authenticateJWT , futureTradeController.getFut
 // Google Authentication Routes
 
 //profile
-router.post('/change-password',authenticateJWT , profileController.changepass);
+router.post('/change-password' ,validateChangePassword,authenticateJWT , profileController.changepass);
 router.get('/invite', authenticateJWT ,profileController.invite);
 router.post('/change-name',authenticateJWT, profileController.changename);
+router.post('/change-mail', validateEmail,authenticateJWT, profileController.changemail);
+router.post('/change-phone', validatePhone, authenticateJWT, profileController.changephone);
+router.get('/getinfo',authenticateJWT, profileController.getinfo);
+router.get('/getreffrial',authenticateJWT, profileController.reffrail);
 router.get('/invite-comession',authenticateJWT, profileController.inviteCommession);
 router.post('/upload',authenticateJWT, profileController.uploadImage); 
 // router.post("/upload", authenticateJWT, upload.single("image"), profileController.uploadImage);
