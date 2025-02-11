@@ -17,7 +17,7 @@ const authenticateJWT = (req, res, next) => {
         if (err) {
             return res.status(403).json({ message: 'Forbidden: Invalid or expired token' });
         }
-        console.log(token);
+       
         // If valid, add the decoded user information to the request object
         req.user = user;
         next(); // Proceed to the next middleware or route handler

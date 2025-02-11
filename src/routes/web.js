@@ -8,6 +8,12 @@ const { validateRegistration, handleValidationErrors } = require('../middleware/
 const  spotTradeController  = require('../controllers/spotTradeController');
 const  futureTradeController  = require('../controllers/futureTradeController');
 const  middlewareController  = require('../middleware/middlewareController');
+const authenticateJWT = require('../middleware/middlewareController');
+const {fetchPublicIP} = require('../controllers/publicIpContoller');
+const {startFutureCronJob,
+    stopFutureCronJob,
+    startSpotCronJob,
+    stopSpotCronJob, getBalance} = require('../controllers/cronController');
 const router = express.Router();
 const app = express();
 app.use(express.json()); // Handles `application/json` content
@@ -26,9 +32,17 @@ router.post('/login',authController.loginValidator,authController.loginHandler);
 router.post('/verify-otp',authController.verifyOtp);
 router.post('/otp-send',authController.sendOtp);
 router.get('/coins',showCoinController.showCoin);
-router.post('/apiBind',middlewareController,apiBindController.apiBind);
-router.get('/account-info', middlewareController,spotTradeController.getAccountInfo);
-router.get('/future-account-info',middlewareController, futureTradeController.getFutureAccountInfo);
+router.post('/apiBind',authenticateJWT,apiBindController.apiBind);
+router.get('/monitor-price',authenticateJWT,spotTradeController.monitorPrice);
+
+router.get('/account-info', middlewareController,authenticateJWT,spotTradeController.getAccountInfo);
+router.get('/future-account-info',middlewareController,authenticateJWT, futureTradeController.getFutureAccountInfo);
+router.get('/Public-IP',middlewareController,authenticateJWT, fetchPublicIP);
+router.get('/start-future-cron', startFutureCronJob);
+router.get('/stop-future-cron', stopFutureCronJob);
+router.get('/start-spot-cron', startSpotCronJob);
+router.get('/stop-spot-cron', stopSpotCronJob);
+router.get('/balance', getBalance);
 // Google Authentication Routes
 
 
