@@ -1,11 +1,19 @@
+const Binance = require('node-binance-api');
 const { Spot } = require('@binance/connector');
+const { UMFutures } = require('@binance/futures-connector');
+const https = require('https');
+const agent = new https.Agent({ family: 4 });
 const crypto = require('crypto');
 const axios = require('axios');
 const WebSocket = require('ws');
 const connection = require('../config/database'); // Database connection
 const BASE_URL = 'https://testnet.binance.vision';
+const NodeCache = require('node-cache');
+const { livePrices } = require('../controllers/binaceLiveController');
+const coinPriceCache = new NodeCache({ stdTTL: 60 }); // Cache TTL is 60 seconds
 const { analyzeMarketTrend, fetchTopCoinsFromDatabase } = require('../controllers/marketAiBotController');
 // Helper function to create a signature
+
 const middlewareController = require('../middleware/middlewareController');
 function createSignature(queryString, apiSecret) {
     return crypto.createHmac('sha256', apiSecret).update(queryString).digest('hex');
@@ -148,7 +156,7 @@ async function isTestnetOnline() {
 }
 async function getAccountInfo(req, res) {
     const userId = req.user.userId;
-   
+   console.log("user Id",userId);
     if (!userId) {
         return res.status(400).json({ success:false, message: 'User ID is required' });
     }
@@ -601,7 +609,817 @@ async function monitorPrice(req , res ) {
     }
 }
 
+// async function getActiveTrades(req, res) {
+//     const userId = 69;
+//     if (!userId) {
+//       return res.status(400).json({ success: false, error: 'User ID is required.' });
+//     }
+  
+//     try {
+//       // 1. Retrieve all active trades for the user, ordered by transact_time ascending.
+//       const query = `
+//         SELECT *
+//         FROM orders
+//         WHERE userId = ? AND tradeStatus = ?
+//         ORDER BY transact_time ASC
+//       `;
+//       const [activeTrades] = await connection.query(query, [userId, 'active']);
+//       if (!activeTrades.length) {
+//         return res.status(404).json({ success: false, message: 'No active trades found.' });
+//       }
+  
+//       // 2. Define mapping from our coin symbols to CoinGecko IDs.
+//       const coinGeckoMapping = {
+//         btc: "bitcoin", eth: "ethereum", xrp: "ripple", bnb: "binancecoin",
+//         sol: "solana", doge: "dogecoin", ada: "cardano", trx: "tron",
+//         avax: "avalanche-2", sui: "sui", ton: "toncoin", link: "chainlink",
+//         shib: "shiba-inu", wbtc: "wrapped-bitcoin", xlm: "stellar",
+//         hbar: "hedera-hashgraph", dot: "polkadot", bch: "bitcoin-cash", ltc: "litecoin"
+//       };
+  
+//       // 3. Extract unique coin symbols (e.g., from "BTCUSDT" to "btc") for price lookup.
+//       const symbols = activeTrades.map(order =>
+//         order.symbol.replace('USDT', '').toLowerCase()
+//       );
+//       const uniqueSymbols = [...new Set(symbols)];
+//       const coinIds = uniqueSymbols
+//         .map(symbol => coinGeckoMapping[symbol])
+//         .filter(id => id !== undefined);
+  
+//       // 4. Get live prices for these coins from CoinGecko.
+//       const coinGeckoUrl = `https://api.coingecko.com/api/v3/simple/price?ids=${coinIds.join(',')}&vs_currencies=usd`;
+//       const priceResponse = await axios.get(coinGeckoUrl);
+//       const livePrices = priceResponse.data;
+  
+//       // 5. Enhance each order with live price, calculate pnl and pnlPercentage.
+//       const ordersWithPrices = activeTrades.map(order => {
+//         const code = order.symbol.replace('USDT', '').toLowerCase();
+//         const coinId = coinGeckoMapping[code];
+//         const realPrice =
+//           coinId && livePrices[coinId] && livePrices[coinId].usd
+//             ? livePrices[coinId].usd
+//             : order.price;
+//         const pnl = (realPrice - order.price) * order.orig_qty;
+//         const pnlPercentage = ((realPrice - order.price) / order.price) * 100;
+//         return { ...order, realPrice, pnl, pnlPercentage };
+//       });
+  
+//       // 6. From these, pick the oldest trade per coin.
+//       const firstTradesPerCoin = [];
+//       const seenCoins = new Set();
+//       for (const trade of ordersWithPrices) {
+//         const coinCode = trade.symbol.replace('USDT', '').toLowerCase();
+//         if (!seenCoins.has(coinCode)) {
+//           seenCoins.add(coinCode);
+//           firstTradesPerCoin.push(trade);
+//         }
+//       }
+  
+//       // 7. Get total invested amount per coin from the database.
+//       const sumQuery = `
+//         SELECT REPLACE(LOWER(symbol), 'usdt', '') AS coinCode, SUM(orig_qty * price) AS totalAmount
+//         FROM orders
+//         WHERE userId = ? AND tradeStatus = 'active'
+//         GROUP BY coinCode
+//       `;
+//       const [sumResults] = await connection.query(sumQuery, [userId]);
+  
+//       // 8. Calculate per-coin PnL and combine with total invested amount.
+//       const coinStats = {};
+//       // Sum up pnl per coin from ordersWithPrices.
+//       ordersWithPrices.forEach(order => {
+//         const coinCode = order.symbol.replace('USDT', '').toLowerCase();
+//         if (!coinStats[coinCode]) {
+//           coinStats[coinCode] = { pnl: 0 };
+//         }
+//         coinStats[coinCode].pnl += order.pnl;
+//       });
+//       // Merge total invested amount and compute pnlPercentage.
+//       sumResults.forEach(coin => {
+//         const coinCode = coin.coinCode;
+//         const totalAmount = coin.totalAmount;
+//         if (!coinStats[coinCode]) {
+//           coinStats[coinCode] = { pnl: 0 };
+//         }
+//         coinStats[coinCode].totalAmount = totalAmount;
+//         coinStats[coinCode].pnlPercentage = totalAmount > 0 
+//           ? (coinStats[coinCode].pnl / totalAmount) * 100 
+//           : 0;
+//       });
+  
+//       // 9. Compute overall PnL and overall PnL percentage.
+//       let totalOverallPnl = 0;
+//       let totalInvestment = 0;
+//       for (const coinCode in coinStats) {
+//         totalOverallPnl += coinStats[coinCode].pnl;
+//         totalInvestment += Number(coinStats[coinCode].totalAmount || 0);
+//       }
+//       const totalOverallPnlPercentage = totalInvestment > 0 
+//         ? (totalOverallPnl / totalInvestment) * 100 
+//         : 0;
+  
+//       // 10. Merge the per-coin stats into each trade in firstTradesPerCoin.
+//       // Each trade now gets an additional property "coinStats" with its PnL details.
+//       const activeTradesWithStats = firstTradesPerCoin.map(trade => {
+//         const coinCode = trade.symbol.replace('USDT', '').toLowerCase();
+//         return { ...trade, coinStats: coinStats[coinCode] || {} };
+//       });
+  
+//       // 11. Return the response.
+//       return res.status(200).json({
+//         success: true,
+//         activeTrades: activeTradesWithStats, // Each trade includes its coinStats.
+//         totalOverallPnl,
+//         totalOverallPnlPercentage
+//       });
+//     } catch (error) {
+//       console.error('Error fetching active trades:', error.message);
+//       return res.status(500).json({
+//         success: false,
+//         error: 'Failed to fetch active trades',
+//         details: error.message,
+//       });
+//     }
+//   }
+  
+
+async function getActiveTrades(req, res) {
+  const userId = 69;
+  if (!userId) {
+    return res.status(400).json({ success: false, error: 'User ID is required.' });
+  }
+  
+  const marketType = req.query.type === 'future' ? 'future' : 'spot';
+  const tableName = marketType === 'future' ? 'future_orders' : 'orders';
+
+  try {
+    // 1. Retrieve all active trades
+    const query = `
+      SELECT *
+      FROM ${tableName}
+      WHERE userId = ? AND tradeStatus = ?
+      ORDER BY transact_time ASC
+    `;
+    const queryParams = [userId, 'active'];
+    const [activeTrades] = await connection.query(query, queryParams);
+    if (!activeTrades.length) {
+      return res.status(404).json({ success: false, message: 'No active trades found.' });
+    }
+
+    // 2. (Optional) Mapping if needed.
+    // In this example, our orders use symbols like "BTCUSDT".
+    // We process them by converting to lowercase and removing "usdt".
+    const processSymbol = (symbol) => symbol.replace('USDT', '').toLowerCase();
+
+    // 3. Enhance each order with live price from Binance and calculate PnL.
+    // We use the livePrices object provided by our Binance WebSocket module.
+    const ordersWithPrices = activeTrades.map(order => {
+      const coinKey = processSymbol(order.symbol);
+      // Use Binance live price if available; otherwise, fall back to the stored order price.
+      const realPrice = livePrices[coinKey] ? livePrices[coinKey] : parseFloat(order.price);
+      const pnl = (realPrice - parseFloat(order.price)) * parseFloat(order.orig_qty);
+      const pnlPercentage = ((realPrice - parseFloat(order.price)) / parseFloat(order.price)) * 100;
+      return { ...order, realPrice, pnl, pnlPercentage };
+    });
+
+    // 4. Pick the oldest trade per coin.
+    const firstTradesPerCoin = [];
+    const seenCoins = new Set();
+    for (const trade of ordersWithPrices) {
+      const coinKey = processSymbol(trade.symbol);
+      if (!seenCoins.has(coinKey)) {
+        seenCoins.add(coinKey);
+        firstTradesPerCoin.push(trade);
+      }
+    }
+
+    // 5. Get the total invested amount per coin.
+    const sumQuery = `
+      SELECT REPLACE(LOWER(symbol), 'usdt', '') AS coinCode, SUM(orig_qty * price) AS totalAmount
+      FROM ${tableName}
+      WHERE userId = ? AND tradeStatus = ?
+      GROUP BY coinCode
+    `;
+    const sumParams = [userId, 'active'];
+    const [sumResults] = await connection.query(sumQuery, sumParams);
+
+    // 6. Compute per-coin stats.
+    const coinStats = {};
+    ordersWithPrices.forEach(order => {
+      const coinKey = processSymbol(order.symbol);
+      if (!coinStats[coinKey]) {
+        coinStats[coinKey] = { pnl: 0 };
+      }
+      coinStats[coinKey].pnl += order.pnl;
+    });
+    sumResults.forEach(coin => {
+      const coinKey = coin.coinCode;
+      const totalAmount = parseFloat(coin.totalAmount);
+      if (!coinStats[coinKey]) {
+        coinStats[coinKey] = { pnl: 0 };
+      }
+      coinStats[coinKey].totalAmount = totalAmount;
+      // console.log('real:', totalAmount);
+      coinStats[coinKey].pnlPercentage = totalAmount > 0 
+        ? (coinStats[coinKey].pnl / totalAmount) * 100 
+        : 0;
+    });
+
+    // 7. Compute overall stats.
+    let totalOverallPnl = 0;
+    let totalInvestment = 0;
+    for (const coinKey in coinStats) {
+      totalOverallPnl += coinStats[coinKey].pnl;
+      totalInvestment += Number(coinStats[coinKey].totalAmount || 0);
+    }
+    const totalOverallPnlPercentage = totalInvestment > 0 
+      ? (totalOverallPnl / totalInvestment) * 100 
+      : 0;
+
+    // 8. Merge coin stats with the first trade per coin.
+    const activeTradesWithStats = firstTradesPerCoin.map(trade => {
+      const coinKey = processSymbol(trade.symbol);
+      return { ...trade, coinStats: coinStats[coinKey] || {} };
+    });
+    // console.log('work:', activeTradesWithStats);
+    return res.status(200).json({
+      success: true,
+      activeTrades: activeTradesWithStats,
+      totalOverallPnl,
+      totalOverallPnlPercentage
+    });
+  } catch (error) {
+    console.error('Error fetching active trades:', error.message);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to fetch active trades',
+      details: error.message,
+    });
+  }
+}
+
+//  async function cancelOrder(req, res) {
+//     const { symbol } = req.body;
+//     const userId=69;
+//     try {
+//         if (!symbol) {
+//           console.log(`No symbol provided to process for user ${userId}`);
+//           return;
+//         }
+    
+//         // Fetch API Keys from Database
+//         const { apiKey, apiSecret } = await getApiKeysFromDatabase(userId);
+//         if (!apiKey || !apiSecret) {
+//           throw new Error("API credentials not found for user.");
+//         }
+//         console.log(`Using API Key: ${apiSecret}`);
+
+//         // ✅ Initialize Binance Spot client
+//         const client = new Spot(apiKey, apiSecret, { baseURL: 'https://testnet.binance.vision' });
+//         console.log("✅ Binance Client Initialized:", JSON.stringify(client, null, 2));
+//         console.log(`Attempting to sell ${symbol} for user ${userId}`);
+    
+//         // Fetch account information
+//         const accountInfo = await client.account();
+//         console.log("Account Balances:", accountInfo.data.balances); // ✅ Debugging step
+    
+//         // ✅ Convert symbol correctly
+//         const assetCode = symbol.replace('USDT', '').toUpperCase();
+//         const assetBalance = accountInfo.data.balances.find(b => b.asset === assetCode);
+    
+//         if (!assetBalance || parseFloat(assetBalance.free) === 0) {
+//           console.log(`No balance available to sell for ${symbol}`);
+//           return;
+//         }
+    
+//         console.log(`Available balance for ${symbol}: ${assetBalance.free}`);
+    
+//         // ✅ Place a Market Sell Order
+//         const availableQty = parseFloat(assetBalance.free);
+//         const response = await client.newOrder(symbol, 'SELL', 'MARKET', { quantity: availableQty });
+    
+//         if (response.data && response.data.status === 'FILLED') {
+//           console.log(`Successfully sold ${availableQty} of ${symbol}:`, response.data);
+    
+//           // Update trade status to inactive for this symbol
+//           const [result] = await connection.execute(
+//             'UPDATE orders SET tradeStatus = ? WHERE symbol = ? AND userId = ?',
+//             ['inactive', symbol, userId]
+//           );
+    
+//           if (result.affectedRows > 0) {
+//             console.log(`Order for ${symbol} updated to inactive`);
+//           } else {
+//             console.log(`No order found for ${symbol} to update`);
+//           }
+//         } else {
+//           console.log(`Order for ${symbol} was not filled`, response.data);
+//         }
+//       } catch (error) {
+//         console.error(`Error processing ${symbol}:`, error.response?.data || error.message);
+//       }
+    
+// }
+
+
+function futuresBalanceAsync(binance) {
+  return new Promise((resolve, reject) => {
+    binance.futuresBalance((err, balances) => {
+      if (err) {
+        console.error("Error in futuresBalance:", err);
+        return reject(err);
+      }
+      console.log("Balances retrieved:", balances);
+      resolve(balances);
+    });
+  });
+}
+
+// Promise wrapper for callback-based futuresOrder
+function futuresOrderAsync(binance, side, symbol, quantity, options) {
+  return new Promise((resolve, reject) => {
+    binance.futuresOrder(side, symbol, quantity, options, (err, orderResponse) => {
+      if (err) {
+        console.error("Error placing futures order:", err);
+        return reject(err);
+      }
+      resolve(orderResponse);
+    });
+  });
+}
+
+async function cancelOrder(req, res) {
+  // Extract symbol and marketType from request body.
+  // marketType should be 'spot' or 'future'. Defaults to 'spot'.
+  const { symbol, marketType = 'spot' } = req.body;
+  const userId = 69;
+  console.log('symbol:-',symbol);
+  if (!symbol) {
+    console.log(`No symbol provided for user ${userId}`);
+    return res.status(400).json({ success: false, error: 'No symbol provided' });
+  }
+  
+  try {
+    // Fetch API keys from the database.
+    const { apiKey, apiSecret } = await getApiKeysFromDatabase(userId);
+    if (!apiKey || !apiSecret) {
+      throw new Error("API credentials not found for user.");
+    }
+    console.log(`Using API credentials for user ${userId}`);
+    
+    if (marketType === 'future') {
+      // FUTURES TRADING: Use node-binance-api for futures.
+    // Initialize the Binance Futures client
+    const client = new UMFutures({
+      api_key: apiKey,
+      api_secret: apiSecret,
+      // The connector automatically uses the correct endpoint based on the options,
+      // but if needed you can override with something like:
+      baseUrl: 'https://testnet.binancefuture.com',
+      test: true, // enable test mode
+      // Other options may be added as needed
+    });
+
+    async function getOpenOrderId(symbol) {
+      try {
+        const recvWindow = 10000;
+        const timestamp = Date.now();
+        const queryString = `symbol=${symbol}&timestamp=${timestamp}&recvWindow=${recvWindow}`;
+        const signature = crypto
+          .createHmac("sha256", apiSecret)
+          .update(queryString)
+          .digest("hex");
+        const url = `${baseUrl}/fapi/v1/allOrders?${queryString}&signature=${signature}`;
+        const headers = { "X-MBX-APIKEY": apiKey };
+    
+        const response = await axios.get(url, { headers });
+        console.log("check response:",response);
+        const openOrders = response.data;
+        console.log("Open orders for", symbol, ":", openOrders);
+        if (openOrders && openOrders.length > 0) {
+          return openOrders[0].orderId;
+        } else {
+          throw new Error("No open orders found for symbol " + symbol);
+        }
+      } catch (error) {
+        throw new Error(
+          "Error retrieving open orders: " +
+            (error.response ? JSON.stringify(error.response.data) : error.message)
+        );
+      }
+    }
+    
+    
+    console.log("Futures client initialized using @binance/futures-connector.");
+    const baseUrl = "https://testnet.binancefuture.com";
+    async function fetchFuturesAccountInfo() {
+      try {
+        const recvWindow = 10000;
+        const endpoint = `${baseUrl}/fapi/v2/account`;
+        const timestamp = Date.now();
+        const queryString = `timestamp=${timestamp}&recvWindow=${recvWindow}`;
+        const signature = crypto
+          .createHmac("sha256", apiSecret)
+          .update(queryString)
+          .digest("hex");
+    
+        const url = `${endpoint}?${queryString}&signature=${signature}`;
+        const headers = {
+          "X-MBX-APIKEY": apiKey,
+        };
+    console.log('apikey',apiKey);
+        const response = await axios.get(url, { headers });
+        return response.data; // Contains account info, including positions
+      } catch (error) {
+        throw new Error(
+          error.response ? JSON.stringify(error.response.data) : error.message
+        );
+      }
+    }
+    
+    // Main async function to close the futures position
+    (async () => {
+      try {
+        console.log("Fetching futures positions...");
+    
+        // Retrieve futures account info manually
+        const accountInfo = await fetchFuturesAccountInfo();
+        // console.log("Account Info:", accountInfo);
+    
+        // Extract positions from account info (adjust if needed)
+        const positions = accountInfo.positions;
+        if (!positions) {
+          console.error("Positions not found in account info.");
+          return res.status(500).json({
+            success: false,
+            message: "Positions data missing",
+          });
+        }
+    
+        // Find the position for the given symbol
+        const position = positions.find((p) => p.symbol === symbol);
+        if (!position) {
+          console.log(`No position found for ${symbol}`);
+          return res.status(400).json({
+            success: false,
+            message: `No open position for ${symbol}`,
+          });
+        }
+    
+        // Parse the current position amount
+        const positionAmt = parseFloat(position.positionAmt);
+        if (positionAmt === 0) {
+          console.log(`No open position to close for ${symbol}`);
+          return res.status(400).json({
+            success: false,
+            message: `No open position for ${symbol}`,
+          });
+        }
+    
+        // Determine the side to close:
+        // - If you're long (positionAmt > 0), you'll sell to close.
+        // - If you're short (positionAmt < 0), you'll buy to close.
+        const closeSide = positionAmt > 0 ? "SELL" : "BUY";
+        const quantity = Math.abs(positionAmt); // Always use a positive number
+    
+        console.log(
+          `Closing position for ${symbol}: positionAmt=${positionAmt}. Placing ${closeSide} order for ${quantity}.`
+        );
+    const orderId = await getOpenOrderId(symbol);
+    console.log("Retrieved order ID:", orderId);
+    const cancelResponse = await client.cancelOrder({ symbol, orderId });
+    console.log("Order cancellation response:", cancelResponse.data);
+        // Define the order parameters
+        // const orderParams = {
+        //   symbol, // e.g., 'BTCUSDT'
+        //   side: closeSide, // "BUY" or "SELL"
+        //   type: "MARKET",
+        //   quantity, // The quantity to close the position
+        //   reduceOnly: true,
+        // };
+    
+        // console.log("Order parameters:", orderParams);
+    
+        // // Place the market order to close the position using the UMFutures client
+        // const orderResponse = await client.newOrder(
+        //   symbol,       // e.g., "BTCUSDT"
+        //   closeSide,    // "BUY" or "SELL"
+        //   "MARKET",     // Order type
+        //   { 
+        //     quantity,   // The quantity to close the position
+        //     reduceOnly: true
+        //   }
+        // );
+        // console.log(`Close trade order response for ${symbol}:`, orderResponse);
+       
+        // Check the order response. Adjust this check based on the actual response structure.
+        // Here we assume that a successfully executed order returns orderResponse.data.status === 'FILLED'
+        if (orderResponse && orderResponse.data && orderResponse.data.status === "FILLED") {
+          try {
+            // Example: Update your database (adjust SQL as needed)
+            const [result] = await connection.execute(
+              "UPDATE future_orders SET tradeStatus = ? WHERE symbol = ? AND userId = ?",
+              ["inactive", symbol, userId]
+            );
+            if (result.affectedRows > 0) {
+              console.log(`Futures order for ${symbol} updated to inactive`);
+            } else {
+              console.log(`No matching futures order found for ${symbol} to update`);
+            }
+            return res.status(200).json({ success: true, data: orderResponse });
+          } catch (dbError) {
+            console.error("Database update error:", dbError);
+            return res.status(500).json({ success: false, error: dbError });
+          }
+        } else {
+          console.log(`Close order for ${symbol} was not filled`, orderResponse);
+          return res.status(500).json({
+            success: false,
+            message: "Close order not filled",
+            data: orderResponse,
+          });
+        }
+      } catch (error) {
+        console.error(
+          "Error closing trade:",
+          error.response ? error.response.data : error.message
+        );
+        return res.status(500).json({
+          success: false,
+          error: error.response ? error.response.data : error.message,
+        });
+      }
+    })();
+    } else {
+      // SPOT TRADING: Do not change the spot trading code.
+      const client = new Spot(apiKey, apiSecret, { baseURL: 'https://testnet.binance.vision' });
+      console.log("Spot client initialized.");
+      
+      const accountInfo = await client.account();
+      console.log("Account Info:", accountInfo.data.balances);
+      
+      const assetCode = symbol.replace('USDT', '').toUpperCase();
+      const assetBalance = accountInfo.data.balances.find(b => b.asset === assetCode);
+      if (!assetBalance || parseFloat(assetBalance.free) === 0) {
+        console.log(`No available balance to sell for ${symbol}`);
+        return res.status(400).json({ success: false, message: `No balance available for ${symbol}` });
+      }
+      console.log(`Available balance for ${symbol}: ${assetBalance.free}`);
+      const availableQty = parseFloat(assetBalance.free);
+      
+      let orderResponse = await client.newOrder(symbol, 'SELL', 'MARKET', { quantity: availableQty });
+      if (orderResponse.data && orderResponse.data.status === 'FILLED') {
+        console.log(`Successfully sold ${availableQty} of ${symbol}:`, orderResponse.data);
+        const [result] = await connection.execute(
+          'UPDATE orders SET tradeStatus = ? WHERE symbol = ? AND userId = ?',
+          ['inactive', symbol, userId]
+        );
+        if (result.affectedRows > 0) {
+          console.log(`Order for ${symbol} updated to inactive`);
+        } else {
+          console.log(`No matching order found for ${symbol} to update`);
+          return res.status(400).json({ success: false, message: `No matching order found for ${symbol} to update`});
+        }
+        return res.status(200).json({ success: true, data: orderResponse.data });
+      } else {
+        console.log(`Order for ${symbol} was not filled`, orderResponse.data);
+        return res.status(500).json({ success: false, message: 'Order not filled', data: orderResponse.data });
+      }
+    }
+  } catch (error) {
+    console.error(`Error processing ${symbol}:`, error.response?.data || error.message);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to cancel order',
+      details: error.response?.data || error.message,
+    });
+  }
+}
+
+// async function getClosedTrades(req, res) {
+//   const userId = 69; // Example userId, update based on req.user if needed.
+//   if (!userId) {
+//     return res.status(400).json({ success: false, error: 'User ID is required.' });
+//   }
+
+//   try {
+//     // 1. Fetch closed trades from the database.
+//     const query = `
+//       SELECT *
+//       FROM orders
+//       WHERE userId = ? AND tradeStatus = ?
+//       ORDER BY transact_time ASC
+//     `;
+//     const [closedTrades] = await connection.query(query, [userId, 'inactive']);
+
+//     if (!closedTrades.length) {
+//       return res.status(404).json({ success: false, message: 'No closed trades found.' });
+//     }
+
+//     // 2. Coin symbol mapping for CoinGecko
+//     const coinGeckoMapping = {
+//       btc: "bitcoin",
+//       eth: "ethereum",
+//       xrp: "ripple",
+//       bnb: "binancecoin",
+//       sol: "solana",
+//       doge: "dogecoin",
+//       ada: "cardano",
+//       trx: "tron",
+//       avax: "avalanche-2",
+//       sui: "sui",
+//       ton: "toncoin",
+//       link: "chainlink",
+//       shib: "shiba-inu",
+//       wbtc: "wrapped-bitcoin",
+//       xlm: "stellar",
+//       hbar: "hedera-hashgraph",
+//       dot: "polkadot",
+//       bch: "bitcoin-cash",
+//       ltc: "litecoin",
+//     };
+
+//     // 3. Extract unique coin symbols
+//     const symbols = closedTrades.map(order =>
+//       order.symbol.replace('USDT', '').toLowerCase()
+//     );
+//     const uniqueSymbols = [...new Set(symbols)];
+
+//     // 4. Get CoinGecko IDs
+//     const coinIds = uniqueSymbols
+//       .map(symbol => coinGeckoMapping[symbol])
+//       .filter(id => id !== undefined);
+
+//     // 5. Fetch live prices from CoinGecko
+//     const coinGeckoUrl = `https://api.coingecko.com/api/v3/simple/price?ids=${coinIds.join(
+//       ','
+//     )}&vs_currencies=usd`;
+//     const priceResponse = await axios.get(coinGeckoUrl);
+//     const livePrices = priceResponse.data;
+
+//     // 6. Attach live prices to closed trades
+//     const ordersWithPrices = closedTrades.map(order => {
+//       const code = order.symbol.replace('USDT', '').toLowerCase();
+//       const coinId = coinGeckoMapping[code];
+//       const realPrice =
+//         coinId && livePrices[coinId] && livePrices[coinId].usd
+//           ? livePrices[coinId].usd
+//           : order.price;
+//       return { ...order, realPrice };
+//     });
+
+//     // 7. Retrieve the oldest closed trade for each coin.
+//     const firstClosedTradesPerCoin = [];
+//     const seenCoins = new Set();
+//     for (const trade of ordersWithPrices) {
+//       const coinCode = trade.symbol.replace('USDT', '').toLowerCase();
+//       if (!seenCoins.has(coinCode)) {
+//         seenCoins.add(coinCode);
+//         firstClosedTradesPerCoin.push(trade);
+//       }
+//     }
+
+//     // 8. Sum the closed trade amounts per coin.
+//     const sumQuery = `
+//       SELECT REPLACE(LOWER(symbol), 'usdt', '') AS coinCode, SUM(orig_qty*price) AS totalAmount
+//       FROM orders
+//       WHERE userId = ? AND tradeStatus = 'inactive'
+//       GROUP BY coinCode
+//     `;
+//     const [sumResults] = await connection.query(sumQuery, [userId]);
+
+//     // 9. Return the closed trades and total amounts.
+//     return res.status(200).json({
+//       success: true,
+//       closedTrades: firstClosedTradesPerCoin,
+//       sumClosedTradesByCoin: sumResults,
+//     });
+//   } catch (error) {
+//     console.error('Error fetching closed trades:', error.message);
+//     return res.status(500).json({
+//       success: false,
+//       error: 'Failed to fetch closed trades',
+//       details: error.message,
+//     });
+//   }
+// }
+
+async function getClosedTrades(req, res) {
+  const userId = 69; // Example userId; in production, you might get this from authentication.
+  // Extract marketType from request body (or req.query); defaults to "spot"
+  const marketType = req.query.marketType || 'spot';
+
+  // console.log('Market Type:',req.query.marketType);
+  // Determine which table to use based on market type.
+  const tableName = marketType === 'future' ? 'future_orders' : 'orders';
+
+  if (!userId) {
+    return res.status(400).json({ success: false, error: 'User ID is required.' });
+  }
+
+  try {
+    // 1. Fetch closed trades from the appropriate table.
+    const query = `
+      SELECT *
+      FROM ${tableName}
+      WHERE userId = ? AND tradeStatus = ?
+      ORDER BY transact_time ASC
+    `;
+    const [closedTrades] = await connection.query(query, [userId, 'inactive']);
+
+    if (!closedTrades.length) {
+      return res.status(404).json({ success: false, message: 'No closed trades found.' });
+    }
+
+    // 2. Define coin symbol mapping for CoinGecko.
+    const coinGeckoMapping = {
+      btc: "bitcoin",
+      eth: "ethereum",
+      xrp: "ripple",
+      bnb: "binancecoin",
+      sol: "solana",
+      doge: "dogecoin",
+      ada: "cardano",
+      trx: "tron",
+      avax: "avalanche-2",
+      sui: "sui",
+      ton: "toncoin",
+      link: "chainlink",
+      shib: "shiba-inu",
+      wbtc: "wrapped-bitcoin",
+      xlm: "stellar",
+      hbar: "hedera-hashgraph",
+      dot: "polkadot",
+      bch: "bitcoin-cash",
+      ltc: "litecoin",
+    };
+
+    // 3. Extract unique coin symbols from closedTrades.
+    const symbols = closedTrades.map(order =>
+      order.symbol.replace('USDT', '').toLowerCase()
+    );
+    const uniqueSymbols = [...new Set(symbols)];
+
+    // 4. Get CoinGecko IDs for these symbols.
+    const coinIds = uniqueSymbols
+      .map(symbol => coinGeckoMapping[symbol])
+      .filter(id => id !== undefined);
+
+    // 5. Fetch live prices from CoinGecko.
+    const coinGeckoUrl = `https://api.coingecko.com/api/v3/simple/price?ids=${coinIds.join(
+      ','
+    )}&vs_currencies=usd`;
+    const priceResponse = await axios.get(coinGeckoUrl);
+    const livePrices = priceResponse.data;
+
+    // 6. Attach live prices to closed trades.
+    const ordersWithPrices = closedTrades.map(order => {
+      const code = order.symbol.replace('USDT', '').toLowerCase();
+      const coinId = coinGeckoMapping[code];
+      const realPrice =
+        coinId && livePrices[coinId] && livePrices[coinId].usd
+          ? livePrices[coinId].usd
+          : order.price;
+      return { ...order, realPrice };
+    });
+
+    // 7. Retrieve the oldest closed trade per coin.
+    const firstClosedTradesPerCoin = [];
+    const seenCoins = new Set();
+    for (const trade of ordersWithPrices) {
+      const coinCode = trade.symbol.replace('USDT', '').toLowerCase();
+      if (!seenCoins.has(coinCode)) {
+        seenCoins.add(coinCode);
+        firstClosedTradesPerCoin.push(trade);
+      }
+    }
+
+    // 8. Sum the closed trade amounts per coin.
+    const sumQuery = `
+      SELECT REPLACE(LOWER(symbol), 'usdt', '') AS coinCode, SUM(orig_qty * price) AS totalAmount
+      FROM ${tableName}
+      WHERE userId = ? AND tradeStatus = 'inactive'
+      GROUP BY coinCode
+    `;
+    const [sumResults] = await connection.query(sumQuery, [userId]);
+  // console.log('done:',firstClosedTradesPerCoin);
+    // 9. Return the closed trades and the summed amounts.
+    return res.status(200).json({
+      success: true,
+      closedTrades: firstClosedTradesPerCoin,
+      sumClosedTradesByCoin: sumResults,
+    });
+  } catch (error) {
+    console.error('Error fetching closed trades:', error.message);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to fetch closed trades',
+      details: error.message,
+    });
+  }
+}
 
 
 
-module.exports = { getAccountInfo,  placeOrder, monitorPrice };
+
+ module.exports = { getAccountInfo, placeOrder, monitorPrice, getActiveTrades, cancelOrder ,getClosedTrades};

@@ -43,6 +43,9 @@ router.get('/stop-future-cron', stopFutureCronJob);
 router.get('/start-spot-cron', startSpotCronJob);
 router.get('/stop-spot-cron', stopSpotCronJob);
 router.get('/balance', getBalance);
+router.get('/getActiveTrades', spotTradeController.getActiveTrades);
+router.post('/cancel-order', spotTradeController.cancelOrder);
+router.get('/getClosedTrades', spotTradeController.getClosedTrades);
 // Google Authentication Routes
 
 

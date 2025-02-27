@@ -1,143 +1,111 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const jwt = require('jsonwebtoken');
+const { UMFutures } = require('@binance/futures-connector');
 const axios = require('axios');
+const https = require('https');
 
-const app = express();
-app.use(bodyParser.json());
+// Create an HTTPS agent (forces IPv4 if needed)
+const agent = new https.Agent({ family: 4 });
 
-const SECRET_KEY = 'my_secret_key';
+// Replace with your Futures Testnet API credentials
+const futuresApiKey = '32370593e41d672f6812fd4ae656266f2ade611c1b5cafea46d7f550f9c6dfa9';
+const futuresApiSecret = '74374e4dfcd3f820289eb018bd7b27bba0ec96bc174153a3523dea15a7519310';
 
-// In-memory user database (for demo purposes)
-const users = [{ username: 'admin', password: 'password123' }];
-
-// Login Endpoint
-app.post('/login', (req, res) => {
-    const { username, password } = req.body;
-    const user = users.find(u => u.username === username && u.password === password);
-
-    if (user) {
-        const token = jwt.sign({ username: user.username }, SECRET_KEY, { expiresIn: '1h' });
-        console.log('Login successful:', user.username);
-        res.json({ message: 'Login successful', token });
-    } else {
-        console.log('Invalid login attempt:', username);
-        res.status(401).json({ message: 'Invalid credentials' });
-    }
+// For other functions (like setting leverage or placing orders) you might still use the UMFutures client:
+const futuresClient = new UMFutures(futuresApiKey, futuresApiSecret, {
+  baseURL: 'https://testnet.binancefuture.com',
+  httpsAgent: agent,
+  useServerTime: true,
 });
 
-// Middleware to verify JWT
-function authenticateToken(req, res, next) {
-    const token = req.headers['authorization'];
-    if (!token) {
-        console.log('No token provided');
-        return res.sendStatus(401);
-    }
-
-    jwt.verify(token, SECRET_KEY, (err, user) => {
-        if (err) {
-            console.log('Invalid token');
-            return res.sendStatus(403);
-        }
-        console.log('Token verified for user:', user.username);
-        req.user = user;
-        next();
-    });
+// --------------------------------------------------------------------------
+// Helper: Sign a query string using HMAC-SHA256
+function signQuery(queryString, secret) {
+  return require('crypto').createHmac('sha256', secret).update(queryString).digest('hex');
 }
 
-// Function to fetch real-time Bitcoin price data from CoinGecko
-async function fetchPriceData() {
-    try {
-        const response = await axios.get('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart', {
-            params: {
-                vs_currency: 'usd',
-                days: '30', // Updated to fetch 30 days of data
-                interval: 'hourly'
-            }
-        });
-        console.log('Price data fetched successfully');
-        return response.data.prices.map(price => price[1]);
-    } catch (error) {
-        console.error('Error fetching price data:', error);
-        return [100, 95, 90, 85, 92, 97, 102, 98, 93, 88, 84, 89, 95]; // Fallback data
-    }
-}
+// --------------------------------------------------------------------------
+// Helper: Fetch Futures Trade History using Axios directly
+async function fetchFuturesTradeHistory(symbol) {
+  try {
+    const baseURL = 'https://testnet.binancefuture.com';
+    const recvWindow = 60000;
+    const timestamp = Date.now();
 
-// Enhanced AI Decision Model
-function aiDecisionModel(price, recentPrices) {
-    const averagePrice = recentPrices.reduce((a, b) => a + b, 0) / recentPrices.length;
-    const volatility = Math.max(...recentPrices) - Math.min(...recentPrices);
+    // Construct query for open orders
+    const openEndpoint = '/fapi/v1/openOrders';
+    const openParams = { symbol, recvWindow, timestamp };
+    const openQueryString = Object.keys(openParams)
+      .map(key => `${key}=${encodeURIComponent(openParams[key])}`)
+      .join('&');
+    const openSignature = signQuery(openQueryString, futuresApiSecret);
+    const openUrl = `${baseURL}${openEndpoint}?${openQueryString}&signature=${openSignature}`;
 
-    console.log(`Price: $${price}, Average: $${averagePrice.toFixed(2)}, Volatility: $${volatility.toFixed(2)}`);
+    // Construct query for all orders
+    const allEndpoint = '/fapi/v1/allOrders';
+    const allParams = { symbol, recvWindow, timestamp, limit: 50 };
+    const allQueryString = Object.keys(allParams)
+      .map(key => `${key}=${encodeURIComponent(allParams[key])}`)
+      .join('&');
+    const allSignature = signQuery(allQueryString, futuresApiSecret);
+    const allUrl = `${baseURL}${allEndpoint}?${allQueryString}&signature=${allSignature}`;
 
-    if (price < averagePrice * 0.95 && volatility > 5) {
-        console.log('Decision: Strong Buy (2x)');
-        return 2; // Increase buy if price is low and volatility is high
-    } else if (price < averagePrice * 0.95) {
-        console.log('Decision: Moderate Buy (1.5x)');
-        return 1.5; // Moderate buy on dip
-    } else if (price > averagePrice * 1.05 && volatility < 3) {
-        console.log('Decision: Reduce Buy (0.3x)');
-        return 0.3; // Reduce buy if price is high and stable
-    } else {
-        console.log('Decision: Normal Buy (1x)');
-        return 1; // Normal buy
-    }
-}
-
-// AI-Powered DCA Strategy (Protected Route)
-const ai_dca = async(req, res) => {
-    const priceData = await fetchPriceData();
-
-    const baseInvestment = 100;
-    const profitTarget = 0.12; // Slightly increased profit target
-    const stopLoss = 0.15; // Reduced stop-loss for better risk management
-
-    let totalInvested = 0;
-    let coinsHeld = 0;
-    let totalCost = 0;
-
-    priceData.forEach((price, index) => {
-        const recentPrices = priceData.slice(Math.max(0, index - 5), index + 1);
-        const investmentMultiplier = aiDecisionModel(price, recentPrices);
-        const investmentAmount = baseInvestment * investmentMultiplier;
-        const coinsBought = investmentAmount / price;
-
-        console.log(`Investing $${investmentAmount.toFixed(2)} to buy ${coinsBought.toFixed(4)} coins at $${price}`);
-
-        totalInvested += investmentAmount;
-        coinsHeld += coinsBought;
-        totalCost += investmentAmount;
-
-        const averageBuyPrice = totalCost / coinsHeld;
-        console.log(`Average Buy Price: $${averageBuyPrice.toFixed(2)}, Total Coins Held: ${coinsHeld.toFixed(4)}`);
-
-        if (price >= averageBuyPrice * (1 + profitTarget)) {
-            const profit = (price - averageBuyPrice) * coinsHeld;
-            console.log(`Profit Target Reached: Selling all for a profit of $${profit.toFixed(2)}`);
-            totalInvested -= totalCost;
-            coinsHeld = 0;
-            totalCost = 0;
-        } else if (price <= averageBuyPrice * (1 - stopLoss)) {
-            const loss = (price - averageBuyPrice) * coinsHeld;
-            console.log(`Stop-Loss Triggered: Selling all for a loss of $${loss.toFixed(2)}`);
-            totalInvested -= totalCost;
-            coinsHeld = 0;
-            totalCost = 0;
-        }
+    // Fetch open orders
+    const openResponse = await axios.get(openUrl, {
+      headers: { 'X-MBX-APIKEY': futuresApiKey },
+      httpsAgent: agent,
     });
 
-    if (coinsHeld > 0) {
-        const currentPrice = priceData[priceData.length - 1];
-        const currentValue = currentPrice * coinsHeld;
-        console.log(`Final Holdings: ${coinsHeld.toFixed(4)} coins valued at $${currentValue.toFixed(2)}`);
-        // res.json({ message: 'Strategy executed', holdings: coinsHeld, currentValue, totalInvested });
-    } else {
-        console.log('No coins held at the end of the strategy');
-        // res.json({ message: 'Strategy executed', totalInvested });
-    }
-};
-ai_dca();
-app.listen(3000, () => {
-    console.log('Server running on http://localhost:3000');
-});
+    // Fetch all orders
+    const allResponse = await axios.get(allUrl, {
+      headers: { 'X-MBX-APIKEY': futuresApiKey },
+      httpsAgent: agent,
+    });
+
+    return {
+      openOrders: openResponse.data,
+      allOrders: allResponse.data,
+    };
+  } catch (error) {
+    console.error('Error fetching Futures trade history:', 
+      error.response ? error.response.data : error.message);
+    throw error;
+  }
+}
+
+// --------------------------------------------------------------------------
+// Main: Combine and display Futures trade history for a given symbol
+async function showFuturesTradeHistory(symbol) {
+  try {
+    console.log(`Fetching Futures trade history for symbol: ${symbol}`);
+    const history = await fetchFuturesTradeHistory(symbol);
+
+    // Filter closed orders: consider orders with status not "NEW" or "PARTIALLY_FILLED" as closed.
+    const closedOrders = history.allOrders.filter(order =>
+      order.status !== 'NEW' && order.status !== 'PARTIALLY_FILLED'
+    );
+
+    const combined = {
+      symbol,
+      openOrders: history.openOrders,
+      closedOrders,
+    };
+
+    console.log('Futures Trade History:');
+    console.log(JSON.stringify(combined, null, 2));
+    return combined;
+  } catch (error) {
+    console.error('Error in showFuturesTradeHistory:', 
+      error.response ? error.response.data : error.message);
+    throw error;
+  }
+}
+
+// --------------------------------------------------------------------------
+// Example usage: Fetch and display Futures trade history for BTCUSDT on Testnet
+showFuturesTradeHistory('BTCUSDT')
+  .then(() => {
+    console.log('Futures trade history fetched successfully.');
+  })
+  .catch((err) => {
+    console.error('Error fetching Futures trade history:', 
+      err.response ? err.response.data : err.message);
+  });
