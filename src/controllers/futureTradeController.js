@@ -219,6 +219,10 @@
 //     // const [results] = await connection.execute(insertQuery, values);
 //     console.log('Future order saved to database:', { /* results */ });
 
+
+
+
+
 //     return res.status(200).json({ message: 'Future market order placed and saved successfully.', orderResponse });
 //   } catch (error) {
 //     console.error('Error placing future order:', error.message);
@@ -695,13 +699,14 @@ async function placeFuturesOrder(req, res, orderType) {
     // Determine allowed decimals
     const decimals = lotSizeFilter.stepSize.toString().split('.')[1]?.length || 0;
     console.log("Allowed decimals:", decimals);
-
+   
     // Calculate quantity based on a fixed USDT amount
     let rawQuantity = 6 / currentPrice;
     rawQuantity = Math.floor(rawQuantity / stepSize) * stepSize;
     const quantityToOrder = parseFloat(rawQuantity.toFixed(decimals));
     console.log("Calculated quantity:", quantityToOrder);
     if (quantityToOrder < minLotSize) {
+      console.log(`Quantity too low. Minimum required: ${minLotSize}` );
       return res.status(400).json({ error: `Quantity too low. Minimum required: ${minLotSize}` });
     }
 
@@ -729,13 +734,14 @@ async function placeFuturesOrder(req, res, orderType) {
       .join('&');
     const signature = signQuery(queryString, apiSecret);
     const url = `${baseURL}${endpoint}?${queryString}&signature=${signature}`;
+    
 
     // Place the order using Axios
     const orderResponse = await axios.post(url, null, {
       headers: { 'X-MBX-APIKEY': apiKey },
       httpsAgent: agent,
     });
-    console.log("Future Order Placed Successfully:", orderResponse.data);
+    console.log("Future Order Placed Successfully:", orderResponse);
 
     // Normalize transactTime
     let orderTime = orderResponse.data.transactTime
@@ -749,23 +755,25 @@ async function placeFuturesOrder(req, res, orderType) {
         orig_qty, status, side, type, leverage, tradeStatus, time_in_force
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
     `;
-    const values = [
-      userId,
-      symbol,
-      orderResponse.data.orderId || null,
-      orderResponse.data.clientOrderId || null,
-      orderTimeISOString,
-      currentPrice,
-      orderResponse.data.origQty || quantityToOrder,
-      orderResponse.data.status || 'N/A',
-      orderResponse.data.side || orderType.toUpperCase(),
-      'MARKET',
-      3,
-      'active',
-      'GTC'
-    ];
+    const data = orderResponse?.data || {}; // fallback to empty object if undefined
+
+const values = [
+  userId,
+  symbol,
+  data.orderId || null,
+  data.clientOrderId || null,
+  orderTimeISOString,
+  currentPrice,
+  data.origQty || quantityToOrder,
+  data.status || 'N/A',
+  data.side || orderType.toUpperCase(),
+  'MARKET',
+  3,
+  'active',
+  'GTC'
+];
     // Uncomment the line below if you want to save the order to your database:
-    // const [results] = await connection.execute(insertQuery, values);
+    const [results] = await connection.execute(insertQuery, values);
     console.log('Future order saved to database:', { /* results */ });
 
     return res.status(200).json({ message: 'Future market order placed and saved successfully.', orderResponse: orderResponse.data });

@@ -510,7 +510,7 @@ async function monitorPrice(req , res ) {
             console.log("coin:",bullishCoin.rsi);
             console.log("coin:",bullishCoin);
             if (res) return res.status(200).json({ message: 'No suitable buying opportunity found.' });
-            return;
+          
         }
         // const symbol = 'TRXUSDT';
         const symbol =bullishCoin.coin.toUpperCase() +"USDT";
@@ -748,6 +748,7 @@ async function getActiveTrades(req, res) {
   if (!userId) {
     return res.status(400).json({ success: false, error: 'User ID is required.' });
   }
+  const { apiKey, apiSecret } = await getApiKeysFromDatabase(userId);
   
   const marketType = req.query.type === 'future' ? 'future' : 'spot';
   const tableName = marketType === 'future' ? 'future_orders' : 'orders';
@@ -842,6 +843,75 @@ async function getActiveTrades(req, res) {
       return { ...trade, coinStats: coinStats[coinKey] || {} };
     });
     // console.log('work:', activeTradesWithStats);
+const BASE_URL = 'https://testnet.binancefuture.com'; // For USDT-margined futures
+
+function getSignature(query, secret) {
+    return crypto.createHmac('sha256', secret).update(query).digest('hex');
+  }
+  
+  // Get all symbols you've traded (based on account)
+  async function getTradedSymbols() {
+    const timestamp = Date.now();
+    const query = `timestamp=${timestamp}`;
+    const signature = getSignature(query, apiSecret);
+  
+    try {
+      const res = await axios.get(`${BASE_URL}/fapi/v2/account?${query}&signature=${signature}`, {
+        headers: { 'X-MBX-APIKEY': apiKey },
+      });
+  
+      const positions = res.data.positions;
+      const symbols = positions
+        .filter(p => parseFloat(p.initialMargin) > 0 || parseFloat(p.unrealizedProfit) !== 0)
+        .map(p => p.symbol);
+  
+      return [...new Set(symbols)]; // Remove duplicates
+    } catch (err) {
+      console.error('Error fetching traded symbols:', err.response?.data || err.message);
+      return [];
+    }
+  }
+  
+  // Get only live + canceled orders for a symbol
+  async function getOrders(symbol) {
+    const timestamp = Date.now();
+    const params = `symbol=${symbol}&timestamp=${timestamp}`;
+    const signature = getSignature(params, apiSecret);
+  
+    try {
+      const res = await axios.get(`${BASE_URL}/fapi/v1/allOrders?${params}&signature=${signature}`, {
+        headers: { 'X-MBX-APIKEY': apiKey },
+      });
+  
+      const orders = res.data;
+       console.log('orders:',orders);
+      const live = orders.filter(o => o.status === 'NEW' || o.status === 'PARTIALLY_FILLED');
+      const canceled = orders.filter(o => o.status === 'CANCELED');
+  
+      return { symbol, live, canceled };
+    } catch (err) {
+      console.error(`Error fetching orders for ${symbol}:`, err.response?.data || err.message);
+      return null;
+    }
+  }
+  
+  // Main
+  async function fetchMyLiveAndCanceledTrades() {
+    const tradedSymbols = await getTradedSymbols();
+  
+    for (const symbol of tradedSymbols) {
+      const data = await getOrders(symbol);
+      console.log('checck dtat:',data);
+      if (data) {
+        console.log(`\n📈 ${data.symbol}`);
+        if (data.live.length) console.log('🟢 Live Orders:', data.live);
+        if (data.canceled.length) console.log('❌ Canceled Orders:', data.canceled);
+      }
+    }
+  }
+  
+  // fetchMyLiveAndCanceledTrades();
+
     return res.status(200).json({
       success: true,
       activeTrades: activeTradesWithStats,
@@ -982,36 +1052,67 @@ async function cancelOrder(req, res) {
 
     async function getOpenOrderId(symbol) {
       try {
-        const recvWindow = 10000;
         const timestamp = Date.now();
-        const queryString = `symbol=${symbol}&timestamp=${timestamp}&recvWindow=${recvWindow}`;
-        const signature = crypto
-          .createHmac("sha256", apiSecret)
-          .update(queryString)
-          .digest("hex");
-        const url = `${baseUrl}/fapi/v1/allOrders?${queryString}&signature=${signature}`;
-        const headers = { "X-MBX-APIKEY": apiKey };
-    
+        const query = `symbol=${symbol}&timestamp=${timestamp}`;
+        const signature = crypto.createHmac('sha256', apiSecret).update(query).digest('hex');
+        
+        const url = `${baseUrl}/fapi/v1/openOrders?${query}&signature=${signature}`;
+        const headers = { 'X-MBX-APIKEY': apiKey };
+        
         const response = await axios.get(url, { headers });
-        console.log("check response:",response);
         const openOrders = response.data;
-        console.log("Open orders for", symbol, ":", openOrders);
-        if (openOrders && openOrders.length > 0) {
-          return openOrders[0].orderId;
-        } else {
-          throw new Error("No open orders found for symbol " + symbol);
-        }
-      } catch (error) {
+        
+        console.log("Open Orders:", openOrders);
+              } catch (error) {
         throw new Error(
           "Error retrieving open orders: " +
             (error.response ? JSON.stringify(error.response.data) : error.message)
         );
       }
     }
-    
-    
-    console.log("Futures client initialized using @binance/futures-connector.");
     const baseUrl = "https://testnet.binancefuture.com";
+    async function forceClosePosition(symbol) {
+      try {
+        const timestamp = Date.now();
+        const headers = { 'X-MBX-APIKEY': apiKey };
+    
+        // Step 1: Get all positions
+        const positionQuery = `timestamp=${timestamp}`;
+        const positionSignature = crypto.createHmac('sha256', apiSecret).update(positionQuery).digest('hex');
+        const positionUrl = `${baseUrl}/fapi/v2/positionRisk?${positionQuery}&signature=${positionSignature}`;
+    
+        const posRes = await axios.get(positionUrl, { headers });
+    
+        // Step 2: Find position for the given symbol
+        const position = posRes.data.find(p => p.symbol === symbol.toUpperCase());
+        if (!position) {
+          return console.log(`❌ No position found for ${symbol}`);
+        }
+    
+        const positionAmt = parseFloat(position.positionAmt);
+        if (positionAmt === 0) {
+          return console.log(`✅ No open position for ${symbol}`);
+        }
+    
+        const side = positionAmt > 0 ? 'SELL' : 'BUY';
+        const quantity = Math.abs(positionAmt);
+    
+        // Step 3: Submit market close order
+        const orderTimestamp = Date.now();
+        const orderQuery = `symbol=${symbol}&side=${side}&type=MARKET&quantity=${quantity}&reduceOnly=true&timestamp=${orderTimestamp}`;
+        const orderSignature = crypto.createHmac('sha256', apiSecret).update(orderQuery).digest('hex');
+        const orderUrl = `${baseUrl}/fapi/v1/order?${orderQuery}&signature=${orderSignature}`;
+    
+        const orderRes = await axios.post(orderUrl, null, { headers });
+    
+        console.log(`✅ ${symbol} position force closed:`, orderRes.data);
+      } catch (err) {
+        console.error(`❌ Failed to close ${symbol} position:`, err.response?.data || err.message);
+      }
+    }
+   
+    console.log("Futures client initialized using @binance/futures-connector.");
+   
     async function fetchFuturesAccountInfo() {
       try {
         const recvWindow = 10000;
@@ -1085,6 +1186,7 @@ async function cancelOrder(req, res) {
         console.log(
           `Closing position for ${symbol}: positionAmt=${positionAmt}. Placing ${closeSide} order for ${quantity}.`
         );
+        forceClosePosition(symbol);
     const orderId = await getOpenOrderId(symbol);
     console.log("Retrieved order ID:", orderId);
     const cancelResponse = await client.cancelOrder({ symbol, orderId });
